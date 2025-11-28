@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenSpec 工作流程完整指南</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --sunset-orange: #ff6b35;
+            --coral: #ff8c42;
+            --warm-amber: #ffa726;
+            --soft-peach: #ffb347;
+            --cream: #fff8f0;
+            --warm-gray: #5a5a5a;
+            --light-orange: #fff5ed;
+            --deep-orange: #e85d04;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%);
+            color: var(--warm-gray);
+            min-height: 100vh;
+            padding: 60px 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 140, 66, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            padding: 80px 60px;
+            position: relative;
+            z-index: 2;
+            box-shadow:
+                0 20px 60px rgba(255, 107, 53, 0.12),
+                0 0 1px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 140, 66, 0.15);
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--sunset-orange), var(--coral), var(--warm-amber));
+            border-radius: 20px 20px 0 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 3.8em;
+            font-weight: 800;
+            color: var(--deep-orange);
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: var(--sunset-orange);
+            font-weight: 600;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .description {
+            font-size: 1.05em;
+            color: #6b6b6b;
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.9;
+            font-weight: 400;
+        }
+
+        .key-concept {
+            margin: 60px 0;
+            background: linear-gradient(135deg, #fff8f0 0%, #ffeddb 100%);
+            border-radius: 16px;
+            padding: 50px;
+            border-left: 5px solid var(--sunset-orange);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.1);
+            position: relative;
+        }
+
+        .key-concept::after {
+            content: '💡';
+            position: absolute;
+            right: 40px;
+            top: 40px;
+            font-size: 120px;
+            opacity: 0.04;
+        }
+
+        .key-concept h3 {
+            color: var(--deep-orange);
+            margin-bottom: 25px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .key-concept p {
+            color: #5a5a5a;
+            line-height: 1.9;
+            font-size: 1.05em;
+        }
+
+        .section-title {
+            font-size: 2.6em;
+            color: var(--deep-orange);
+            margin-bottom: 60px;
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 130px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--sunset-orange), var(--warm-amber));
+            margin: 20px auto 0;
+            border-radius: 2px;
+        }
+
+        .folders-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .folder-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid rgba(255, 140, 66, 0.2);
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.08);
+        }
+
+        .folder-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 45px rgba(255, 107, 53, 0.15);
+            border-color: var(--coral);
+        }
+
+        .folder-card .folder-icon {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+        }
+
+        .folder-card h3 {
+            color: var(--deep-orange);
+            margin-bottom: 20px;
+            font-size: 1.7em;
+            font-weight: 700;
+        }
+
+        .folder-path {
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.05em;
+            margin-bottom: 20px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.25);
+        }
+
+        .folder-card .description {
+            color: #6b6b6b;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            font-size: 1em;
+        }
+
+        .file-list {
+            background: var(--light-orange);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 140, 66, 0.15);
+        }
+
+        .file-item {
+            padding: 15px 0;
+            color: #5a5a5a;
+            border-bottom: 1px solid rgba(255, 140, 66, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-item:hover {
+            color: var(--sunset-orange);
+            transform: translateX(5px);
+        }
+
+        .file-item .icon {
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+
+        .workflow-step {
+            margin-bottom: 60px;
+            display: flex;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: 800;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+            border: 4px solid white;
+        }
+
+        .step-content {
+            flex: 1;
+            background: white;
+            border-radius: 18px;
+            padding: 40px;
+            border-left: 5px solid var(--coral);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.08);
+            transition: all 0.4s ease;
+        }
+
+        .step-content:hover {
+            transform: translateX(10px);
+            box-shadow: 0 12px 40px rgba(255, 107, 53, 0.15);
+        }
+
+        .step-name {
+            font-size: 1.9em;
+            color: var(--deep-orange);
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .step-desc {
+            font-size: 1.05em;
+            color: #6b6b6b;
+            line-height: 1.9;
+            margin-bottom: 25px;
+        }
+
+        .step-detail {
+            background: var(--light-orange);
+            padding: 28px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--sunset-orange);
+        }
+
+        .detail-title {
+            font-size: 1em;
+            color: var(--sunset-orange);
+            font-weight: 700;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-content {
+            color: #5a5a5a;
+            line-height: 1.8;
+            font-size: 0.98em;
+        }
+
+        .detail-content ul {
+            margin: 12px 0 0 20px;
+            line-height: 1.9;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #fff8f0 0%, #ffeddb 100%);
+            border: 2px solid rgba(255, 140, 66, 0.2);
+            border-radius: 12px;
+            padding: 28px;
+            margin-top: 20px;
+        }
+
+        .example-title {
+            font-size: 1.05em;
+            color: var(--coral);
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .example-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--coral);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.05);
+        }
+
+        .example-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 16px rgba(255, 107, 53, 0.12);
+        }
+
+        .example-label {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .example-text {
+            font-family: 'Fira Code', monospace;
+            color: var(--sunset-orange);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .example-text:hover {
+            color: var(--deep-orange);
+        }
+
+        .commands {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 2px solid rgba(255, 140, 66, 0.15);
+        }
+
+        .command-title {
+            font-size: 1em;
+            color: var(--sunset-orange);
+            font-weight: 700;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .command-item {
+            font-family: 'Fira Code', monospace;
+            background: var(--light-orange);
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 0.98em;
+            color: var(--deep-orange);
+            border-left: 4px solid var(--coral);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .command-item:hover {
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .arrow {
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 25px solid var(--coral);
+            margin: 20px auto;
+            animation: bounce 2s infinite;
+            filter: drop-shadow(0 4px 8px rgba(255, 107, 53, 0.3));
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        .cli-commands,
+        .slash-commands,
+        .delta-format,
+        .comparison,
+        .features {
+            margin-top: 80px;
+        }
+
+        .cli-commands {
+            background: linear-gradient(135deg, #fff5ed 0%, #ffe4cc 100%);
+            border-radius: 20px;
+            padding: 50px;
+            border: 2px solid rgba(255, 140, 66, 0.2);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.1);
+        }
+
+        .cli-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .cli-card {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            border: 2px solid rgba(255, 140, 66, 0.2);
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.08);
+        }
+
+        .cli-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(255, 107, 53, 0.15);
+            border-color: var(--coral);
+        }
+
+        .cli-card .command {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.35em;
+            color: white;
+            font-weight: 700;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.25);
+        }
+
+        .cli-card .purpose {
+            color: #6b6b6b;
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .usage-example {
+            background: var(--light-orange);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 18px;
+            border-left: 4px solid var(--coral);
+        }
+
+        .usage-example .example-title {
+            font-size: 0.9em;
+            color: var(--deep-orange);
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .usage-example .example-code {
+            font-family: 'Fira Code', monospace;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            color: var(--sunset-orange);
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 140, 66, 0.2);
+        }
+
+        .slash-commands {
+            background: linear-gradient(135deg, #fff8f0 0%, #ffeedd 100%);
+            border-radius: 20px;
+            padding: 50px;
+            border-left: 6px solid var(--warm-amber);
+            box-shadow: 0 8px 30px rgba(255, 140, 66, 0.1);
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            border: 2px solid var(--coral);
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.08);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 10px 35px rgba(255, 107, 53, 0.18);
+        }
+
+        .tool-card .tool-name {
+            font-weight: 700;
+            color: var(--deep-orange);
+            margin-bottom: 15px;
+            font-size: 1.25em;
+        }
+
+        .tool-card .tool-commands {
+            font-size: 0.92em;
+            color: #6b6b6b;
+            font-family: 'Fira Code', monospace;
+            line-height: 1.9;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #fff5ed 0%, #ffe4cc 100%);
+            border-left: 4px solid var(--sunset-orange);
+            padding: 28px;
+            border-radius: 12px;
+            margin: 30px 0;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.08);
+        }
+
+        .info-title {
+            color: var(--deep-orange);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-content {
+            color: #5a5a5a;
+            line-height: 1.8;
+            font-size: 0.98em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-left: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-workflow {
+            color: white;
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+        }
+
+        .badge-tools {
+            color: white;
+            background: linear-gradient(135deg, var(--coral), var(--warm-amber));
+            box-shadow: 0 4px 12px rgba(255, 140, 66, 0.25);
+        }
+
+        code {
+            background: var(--light-orange);
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: var(--sunset-orange);
+            border: 1px solid rgba(255, 140, 66, 0.2);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.92em;
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 80px;
+            text-align: center;
+            padding-top: 50px;
+            border-top: 2px solid rgba(255, 140, 66, 0.2);
+        }
+
+        .footer a {
+            color: var(--sunset-orange);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+
+        .footer a:hover {
+            color: var(--deep-orange);
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(135deg, var(--sunset-orange), var(--coral));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6em;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+            z-index: 1000;
+            border: 3px solid white;
+        }
+
+        .scroll-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-5px) scale(1.08);
+            box-shadow: 0 12px 32px rgba(255, 107, 53, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .workflow-step {
+                flex-direction: column;
+            }
+
+            .folders-container,
+            .cli-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-top" id="scrollTop">↑</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📋 OpenSpec 完整工作流程指南</h1>
+            <div class="subtitle">AI 编程助手的规范驱动开发框架</div>
+            <div class="description">
+                OpenSpec 是一个创新的开发方法论框架，通过在实现前建立明确的需求共识，实现真正的规范驱动开发。
+                它在人类和 AI 之间架起桥梁，创建结构化的工作流程，有效防止范围蔓延，确保开发过程的确定性和可追溯性。
+                本指南将详细介绍每个命令、步骤和最佳实践。
+            </div>
+        </div>
+
+        <div class="key-concept">
+            <h3>💡 核心概念与创新架构</h3>
+            <p>
+                OpenSpec 引入了革命性的<strong>双文件夹架构</strong>设计：<code>openspec/specs/</code> 文件夹维护当前的事实来源（已批准的权威规范），
+                而 <code>openspec/changes/</code> 文件夹则包含所有提议的更新和变更。这种清晰的分离使得代码差异保持明确和易于管理，
+                特别适合需要持续演进的功能开发场景。与传统的单一规范文件方法不同，OpenSpec 将每个功能变更的所有相关内容
+                （提案、任务、设计文档、规范增量）都组织在一个独立的变更文件夹中，这使得它在处理<strong>棕地项目改造</strong>（1→n 开发模式）时
+                表现出色，能够精确追踪每一处变更的来龙去脉。
+            </p>
+        </div>
+
+        <div>
+            <h2 class="section-title">🏗️ 双文件夹架构详解</h2>
+
+            <div class="folders-container">
+                <div class="folder-card">
+                    <div class="folder-icon">📁</div>
+                    <h3>事实来源文件夹</h3>
+                    <div class="folder-path">openspec/specs/</div>
+                    <div class="description">
+                        这是项目规范的<strong>唯一权威来源</strong>，存储按业务领域组织的当前已批准规范。
+                        所有规范都以 Markdown 格式编写，包含需求定义、用户场景和验收标准。
+                        这个文件夹代表了系统的当前状态，是开发和测试的基准。
+                    </div>
+                    <div class="file-list">
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>auth/spec.md</strong> - 认证与授权规范
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">定义用户登录、权限管理、会话处理等</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>profiles/spec.md</strong> - 用户资料管理规范
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">定义用户信息的创建、更新、查询等功能</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>billing/spec.md</strong> - 计费系统规范
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">定义订阅、支付、发票等计费相关功能</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="folder-card">
+                    <div class="folder-icon">📂</div>
+                    <h3>变更提议文件夹</h3>
+                    <div class="folder-path">openspec/changes/</div>
+                    <div class="description">
+                        每个功能变更都有自己的<strong>独立文件夹</strong>，包含该变更的完整上下文：提案说明、任务清单、
+                        技术设计和增量规范。使用明确的差异标记（ADDED/MODIFIED/REMOVED）来精确追踪每一处变更，
+                        确保审查和归档时不会遗漏或混淆任何修改。
+                    </div>
+                    <div class="file-list">
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>proposal.md</strong> - 变更提案文档
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">说明为什么需要这个变更，预期达到什么效果</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>tasks.md</strong> - 实施任务清单
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">详细的待办任务列表，可逐项标记完成</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <span class="icon">📄</span>
+                            <div>
+                                <strong>design.md</strong> - 技术设计文档（可选）
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">记录技术决策、架构选择和实现细节</div>
+                            </div>
+                        </div>
+                        <div class="file-item">
+                            <span class="icon">📁</span>
+                            <div>
+                                <strong>specs/</strong> - 增量规范文件夹
+                                <div style="font-size: 0.9em; color: #999; margin-top: 4px;">包含相对于源规范的差异标记</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 80px;">
+            <h2 class="section-title">🔄 核心工作流程 <span class="badge badge-workflow">4 个步骤</span></h2>
+
+            <!-- 步骤 1 -->
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-name">📝 Draft（起草阶段）</div>
+                    <div class="step-desc">
+                        在这个阶段，AI 助手会根据您的需求创建一个结构化的变更提案。系统会自动在
+                        <code>openspec/changes/</code> 目录下生成一个新的变更文件夹，其中包含提案文档、
+                        任务列表和规范增量。这个阶段的重点是<strong>捕获意图</strong>，而不是立即开始编码。
+                    </div>
+
+                    <div class="step-detail">
+                        <div class="detail-title">🎯 这个阶段做什么？</div>
+                        <div class="detail-content">
+                            <ul>
+                                <li>AI 分析您的需求并创建变更提案</li>
+                                <li>自动生成结构化的文件夹和文档</li>
+                                <li>识别受影响的规范文件</li>
+                                <li>创建初步的任务分解</li>
+                                <li>标记需要添加、修改或删除的内容</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <div class="example-title">💼 实际应用场景</div>
+                        <div class="example-item">
+                            <div class="example-label">场景 1: 添加新功能</div>
+                            <div class="example-text">/openspec:proposal 添加用户双因素认证功能</div>
+                        </div>
+                        <div class="example-item">
+                            <div class="example-label">场景 2: 修改现有功能</div>
+                            <div class="example-text">/openspec-proposal 修改用户搜索，支持按多个条件筛选</div>
+                        </div>
+                    </div>
+
+                    <div class="commands">
+                        <div class="command-title">🎯 可用命令</div>
+                        <div class="command-item">/openspec:proposal &lt;功能描述&gt;</div>
+                        <div class="command-item">/openspec-proposal &lt;功能描述&gt;</div>
+                        <div class="command-item">自然语言：请帮我创建一个关于xxx的提案</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- 步骤 2 -->
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-name">🔍 Review & Align（审查与对齐）</div>
+                    <div class="step-desc">
+                        这是确保团队达成共识的<strong>关键阶段</strong>。所有利益相关者（开发者、产品经理、测试人员）
+                        都可以审查提案、任务和规范，通过反馈循环进行迭代完善。这个阶段可以手动编辑文件，
+                        也可以继续与 AI 对话来细化细节。目标是在写代码之前，确保每个人对"要做什么"有清晰一致的理解。
+                    </div>
+
+                    <div class="step-detail">
+                        <div class="detail-title">🎯 这个阶段做什么？</div>
+                        <div class="detail-content">
+                            <ul>
+                                <li>团队成员审查 proposal.md，确认需求理解一致</li>
+                                <li>检查 tasks.md，评估工作量和依赖关系</li>
+                                <li>验证规范增量，确保没有遗漏或冲突</li>
+                                <li>使用 validate 命令检查格式规范</li>
+                                <li>反复迭代直到所有人都同意</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="commands">
+                        <div class="command-title">🔧 可用工具</div>
+                        <div class="command-item">openspec list - 列出所有变更</div>
+                        <div class="command-item">openspec show &lt;变更名称&gt; - 查看详情</div>
+                        <div class="command-item">openspec validate &lt;变更名称&gt; - 验证格式</div>
+                        <div class="command-item">openspec view - 交互式仪表板</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- 步骤 3 -->
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-name">⚙️ Implement（实施阶段）</div>
+                    <div class="step-desc">
+                        经过充分的审查和对齐后，现在可以开始实际的代码实现了。AI 助手会严格参考已批准的规范，
+                        按照 tasks.md 中的任务列表逐项执行。每完成一个任务，都会在任务列表中标记为完成，
+                        确保整个实现过程<strong>透明可追踪</strong>。
+                    </div>
+
+                    <div class="commands">
+                        <div class="command-title">⚡ 执行命令</div>
+                        <div class="command-item">/openspec:apply &lt;变更名称&gt;</div>
+                        <div class="command-item">/openspec-apply &lt;变更名称&gt;</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- 步骤 4 -->
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-name">📦 Archive（归档阶段）</div>
+                    <div class="step-desc">
+                        当所有任务都完成并测试通过后，就可以将变更归档了。这个过程会自动将增量规范合并回
+                        <code>openspec/specs/</code> 中的源规范文件，然后将变更文件夹移至归档目录。
+                        这一步非常重要，它确保<strong>事实来源始终保持最新</strong>。
+                    </div>
+
+                    <div class="commands">
+                        <div class="command-title">✅ 归档命令</div>
+                        <div class="command-item">/openspec:archive &lt;变更名称&gt;</div>
+                        <div class="command-item">/openspec-archive &lt;变更名称&gt;</div>
+                        <div class="command-item">openspec archive &lt;变更名称&gt; --yes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cli-commands">
+            <h2 class="section-title">🛠️ CLI 命令完整指南</h2>
+
+            <div class="cli-grid">
+                <div class="cli-card">
+                    <div class="command">openspec init</div>
+                    <div class="purpose">
+                        初始化 OpenSpec 项目结构。这是使用 OpenSpec 的第一步，会创建所有必需的目录和配置文件，
+                        并为您的 AI 编程助手配置斜杠命令。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec init</div>
+                    </div>
+                </div>
+
+                <div class="cli-card">
+                    <div class="command">openspec list</div>
+                    <div class="purpose">
+                        显示所有活动的变更文件夹列表。快速了解当前有哪些待处理的功能变更，
+                        每个变更的状态如何。这是日常工作中最常用的命令之一。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec list</div>
+                    </div>
+                </div>
+
+                <div class="cli-card">
+                    <div class="command">openspec view</div>
+                    <div class="purpose">
+                        启动交互式仪表板，提供可视化界面来浏览所有规范和变更。
+                        支持搜索、过滤和详细查看，非常适合团队审查会议使用。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec view</div>
+                    </div>
+                </div>
+
+                <div class="cli-card">
+                    <div class="command">openspec show</div>
+                    <div class="purpose">
+                        显示特定变更的完整详情，包括提案说明、任务列表、规范增量等所有相关信息。
+                        用于深入了解某个具体变更的全部内容。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec show add-2fa</div>
+                    </div>
+                </div>
+
+                <div class="cli-card">
+                    <div class="command">openspec validate</div>
+                    <div class="purpose">
+                        验证变更文件夹中的规范格式是否正确。检查必需的节标题、Scenario 块格式、
+                        Delta 标记等是否符合 OpenSpec 规范。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec validate add-2fa</div>
+                    </div>
+                </div>
+
+                <div class="cli-card">
+                    <div class="command">openspec archive</div>
+                    <div class="purpose">
+                        将已完成的变更归档。自动合并规范增量到源规范文件，并将变更文件夹移至归档目录。
+                        支持一次归档多个变更。
+                    </div>
+                    <div class="usage-example">
+                        <div class="example-title">📝 使用示例</div>
+                        <div class="example-code">$ openspec archive add-2fa -y</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slash-commands">
+            <h2 class="section-title">⚡ 斜杠命令支持 <span class="badge badge-tools">8+ AI 工具</span></h2>
+
+            <div style="margin-bottom: 40px; text-align: center; color: #6b6b6b; font-size: 1.1em; line-height: 1.8;">
+                OpenSpec 原生支持多种 AI 编程助手的斜杠命令。初始化后，这些命令会自动在对应工具中可用。
+            </div>
+
+            <div class="tools-grid">
+                <div class="tool-card">
+                    <div class="tool-name">Claude Code</div>
+                    <div class="tool-commands">
+                        /openspec:proposal<br>
+                        /openspec:apply<br>
+                        /openspec:archive
+                    </div>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-name">Cursor</div>
+                    <div class="tool-commands">
+                        /openspec-proposal<br>
+                        /openspec-apply<br>
+                        /openspec-archive
+                    </div>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-name">GitHub Copilot</div>
+                    <div class="tool-commands">
+                        /openspec-proposal<br>
+                        /openspec-apply<br>
+                        /openspec-archive
+                    </div>
+                </div>
+
+                <div class="tool-card">
+                    <div class="tool-name">Amazon Q</div>
+                    <div class="tool-commands">
+                        @openspec-proposal<br>
+                        @openspec-apply<br>
+                        @openspec-archive
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title">💡 AGENTS.md 兼容性</div>
+                <div class="info-content">
+                    OpenSpec 还通过 <code>openspec/AGENTS.md</code> 文件支持其他 AI 工具。
+                    这些工具可以读取 AGENTS.md 中的指令，并通过<strong>自然语言</strong>来使用 OpenSpec 功能。
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                在 <a href="https://github.com/Fission-AI/OpenSpec" target="_blank">GitHub</a> 上了解更多关于 OpenSpec 的信息
+            </p>
+            <p style="margin-top: 20px; color: #999; font-size: 0.98em;">
+                使用 Claude Code 生成的温暖橙色调工作流程可视化指南
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollTop = document.getElementById('scrollTop');
+            const commandItems = document.querySelectorAll('.command-item, .example-code');
+
+            // 回到顶部
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    scrollTop.classList.add('visible');
+                } else {
+                    scrollTop.classList.remove('visible');
+                }
+            });
+
+            scrollTop.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            // 命令复制功能
+            commandItems.forEach(item => {
+                item.title = '点击复制';
+                item.addEventListener('click', function() {
+                    const text = this.textContent.trim();
+                    navigator.clipboard.writeText(text).then(() => {
+                        const original = this.style.background;
+                        this.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
+                        this.style.color = 'white';
+                        setTimeout(() => {
+                            this.style.background = original;
+                            this.style.color = '';
+                        }, 500);
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
