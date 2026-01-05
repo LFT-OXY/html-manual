@@ -398,13 +398,14 @@
                     header.className = 'flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-all text-slate-600 hover:text-slate-900';
                     header.style.paddingLeft = `${12 + depth * 16}px`;
                     header.innerHTML = `
-                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 dir-icon"></i>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 dir-icon" style="transform: rotate(-90deg)"></i>
                         <i class="fas fa-folder text-amber-500 text-sm"></i>
                         <span class="text-sm font-medium truncate">${name}</span>
                     `;
 
                     const childContainer = document.createElement('div');
                     childContainer.className = 'dir-children';
+                    childContainer.style.display = 'none';
 
                     header.onclick = () => {
                         const icon = header.querySelector('.dir-icon');
