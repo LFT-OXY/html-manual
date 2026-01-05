@@ -87,6 +87,22 @@
         
         /* Sidebar Item Active State */
         .nav-item.active { background-color: #f1f5f9; color: #0f172a; border-right: 3px solid #0ea5e9; }
+
+        /* Category Tab */
+        .category-tab {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px solid transparent;
+        }
+        .category-tab:hover { background: #f1f5f9; color: #334155; }
+        .category-tab.active { background: #0ea5e9; color: white; border-color: #0ea5e9; }
         
         /* Loading Shimmer */
         .shimmer {
@@ -202,6 +218,10 @@
             </div>
         </div>
 
+        <!-- Category Navigation -->
+        <div class="px-4 pb-2 min-w-[20rem]">
+            <div id="categoryNav" class="flex gap-1 overflow-x-auto pb-1 custom-scroll"></div>
+        </div>
 
         <!-- File List -->
         <div class="flex-1 overflow-y-auto p-3 space-y-1 custom-scroll min-w-[20rem]" id="fileList">
@@ -291,9 +311,11 @@
 
         // State
         let allFiles = [];
+        let currentCategory = null; // null = show all
 
         // DOM Elements
         const fileListEl = document.getElementById('fileList');
+        const categoryNav = document.getElementById('categoryNav');
         const searchInput = document.getElementById('searchInput');
         const emptyState = document.getElementById('emptyState');
         const contentWrapper = document.getElementById('contentWrapper');
@@ -430,7 +452,48 @@
             }
 
             const tree = buildTree(files);
-            renderTree(tree, fileListEl, 0);
+
+            // Extract top-level categories (directories only)
+            const categories = Object.entries(tree)
+                .filter(([_, value]) => !value._file)
+                .map(([name]) => name)
+                .sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
+            // Render category tabs
+            renderCategoryNav(categories);
+
+            // Filter by current category
+            if (currentCategory && tree[currentCategory]) {
+                renderTree(tree[currentCategory], fileListEl, 0);
+            } else {
+                renderTree(tree, fileListEl, 0);
+            }
+        }
+
+        function renderCategoryNav(categories) {
+            categoryNav.innerHTML = '';
+
+            // "All" tab
+            const allTab = document.createElement('div');
+            allTab.className = `category-tab ${currentCategory === null ? 'active' : ''}`;
+            allTab.textContent = '全部';
+            allTab.onclick = () => {
+                currentCategory = null;
+                renderList(allFiles);
+            };
+            categoryNav.appendChild(allTab);
+
+            // Category tabs
+            categories.forEach(cat => {
+                const tab = document.createElement('div');
+                tab.className = `category-tab ${currentCategory === cat ? 'active' : ''}`;
+                tab.innerHTML = `<i class="fas fa-folder text-amber-500 mr-1"></i>${cat}`;
+                tab.onclick = () => {
+                    currentCategory = cat;
+                    renderList(allFiles);
+                };
+                categoryNav.appendChild(tab);
+            });
         }
 
         function renderTree(node, container, depth) {
@@ -708,6 +771,9 @@
         // Search Filter
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
+            if (term) {
+                currentCategory = null; // Reset category when searching
+            }
             const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term) || f.path.toLowerCase().includes(term));
             renderList(filtered);
         });
