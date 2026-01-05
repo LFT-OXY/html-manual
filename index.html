@@ -3,251 +3,522 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的笔记</title>
+    <title>OXY's Notebook</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Marked & Highlight -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        serif: ['Noto Serif SC', 'Times New Roman', 'serif'],
+                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    typography: (theme) => ({
+                        DEFAULT: {
+                            css: {
+                                color: '#334155',
+                                maxWidth: 'none',
+                                h1: { fontFamily: theme('fontFamily.serif'), fontWeight: '700', color: '#1e293b' },
+                                h2: { fontFamily: theme('fontFamily.serif'), fontWeight: '600', color: '#334155', marginTop: '2em' },
+                                h3: { fontFamily: theme('fontFamily.serif'), fontWeight: '600', color: '#475569' },
+                                code: { color: '#ec4899', backgroundColor: '#fdf2f8', padding: '0.2em 0.4em', borderRadius: '0.25rem', fontWeight: '500' },
+                                'code::before': { content: '""' },
+                                'code::after': { content: '""' },
+                                pre: { backgroundColor: '#282c34', padding: '0', borderRadius: '0.75rem', overflow: 'hidden' },
+                                'pre code': { backgroundColor: 'transparent', color: 'inherit', padding: '1.5em', display: 'block' },
+                                blockquote: { borderLeftColor: theme('colors.brand.500'), backgroundColor: theme('colors.brand.50'), fontStyle: 'normal', padding: '1em' },
+                                a: { color: theme('colors.brand.600'), textDecoration: 'none', '&:hover': { textDecoration: 'underline' } },
+                            },
+                        },
+                    }),
+                }
+            }
+        }
+    </script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: #e0e0e0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #888;
-            font-size: 1rem;
-        }
-
-        .note-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .note-item {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px 24px;
-            text-decoration: none;
-            color: #e0e0e0;
-            transition: all 0.3s ease;
+        /* Mac-style Window Controls for Code Blocks */
+        .code-header {
             display: flex;
             align-items: center;
-            gap: 16px;
+            padding: 12px 16px;
+            background: #21252b;
+            border-bottom: 1px solid #181a1f;
         }
+        .window-controls { display: flex; gap: 6px; }
+        .control { width: 12px; height: 12px; border-radius: 50%; }
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
+        .lang-badge { margin-left: auto; color: #abb2bf; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
 
-        .note-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(8px);
+        /* Transitions */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
+        
+        /* Sidebar Item Active State */
+        .nav-item.active { background-color: #f1f5f9; color: #0f172a; border-right: 3px solid #0ea5e9; }
+        
+        /* Loading Shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
         }
-
-        .note-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .note-icon.html {
-            background: linear-gradient(135deg, #e44d26, #f16529);
-        }
-
-        .note-icon.md {
-            background: linear-gradient(135deg, #519aba, #2b6cb0);
-        }
-
-        .note-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .note-title {
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .note-meta {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 60px;
-            color: #666;
-        }
-
-        .error {
-            text-align: center;
-            padding: 40px;
-            color: #e74c3c;
-            background: rgba(231, 76, 60, 0.1);
-            border-radius: 12px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .stat-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-num {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-            .note-item {
-                padding: 16px;
-            }
-        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>My Notes</h1>
-            <p class="subtitle">note.3oxy.com</p>
-        </header>
+<body class="bg-white text-slate-700 h-screen flex overflow-hidden selection:bg-brand-100 selection:text-brand-900">
 
-        <div class="stats" id="stats"></div>
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="md:hidden fixed bottom-6 right-6 z-50 w-12 h-12 bg-brand-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-700 transition">
+        <i class="fas fa-bars"></i>
+    </button>
 
-        <div class="note-list" id="noteList">
-            <div class="loading">加载中...</div>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col h-full transform translate-y-full md:translate-y-0 transition-all duration-300 fixed md:relative z-40 flex-shrink-0 whitespace-nowrap overflow-hidden">
+        <!-- Sidebar Header -->
+        <div class="p-6 pb-2 min-w-[20rem] flex justify-between items-start">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center font-serif font-bold text-xl shadow-md">O</div>
+                <div>
+                    <h1 class="font-bold text-slate-800 tracking-tight">OXY's Notebook</h1>
+                    <p class="text-xs text-slate-400 font-medium">DIGITAL GARDEN</p>
+                </div>
+            </div>
+            <button id="sidebarCloseBtn" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition md:flex hidden" title="Collapse Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
-    </div>
+        
+        <!-- Search -->
+        <div class="px-6 pb-2 min-w-[20rem]">
+            <div class="relative group">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                <input type="text" id="searchInput" placeholder="搜索笔记..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div id="filterTabs" class="flex px-6 gap-4 mt-2 mb-2 text-xs font-medium text-slate-500 border-b border-slate-100 pb-2 min-w-[20rem]">
+            <button class="filter-tab active text-brand-600 hover:text-brand-700 transition" data-type="all" onclick="filterType('all', this)">全部</button>
+            <button class="filter-tab hover:text-brand-600 transition" data-type="md" onclick="filterType('md', this)">Markdown</button>
+            <button class="filter-tab hover:text-brand-600 transition" data-type="html" onclick="filterType('html', this)">HTML</button>
+        </div>
+
+        <!-- File List -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1 custom-scroll min-w-[20rem]" id="fileList">
+            <!-- Loading State -->
+            <div class="space-y-3 p-3">
+                <div class="h-10 bg-slate-50 rounded-lg shimmer w-full"></div>
+                <div class="h-10 bg-slate-50 rounded-lg shimmer w-3/4"></div>
+                <div class="h-10 bg-slate-50 rounded-lg shimmer w-5/6"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-100 text-xs text-center text-slate-400 min-w-[20rem]">
+            <p>Syncing with GitHub</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto bg-slate-50/50 relative custom-scroll transition-all duration-300" id="mainContainer">
+        
+        <!-- Empty State Top Bar (Visible when sidebar closed & no file open) -->
+        <div id="emptyStateTopBar" class="absolute top-0 left-0 w-full p-4 z-50 hidden">
+             <button id="emptyStateSidebarToggle" class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition focus:outline-none shadow-sm bg-white border border-slate-200" title="Expand Sidebar">
+                <i class="fas fa-chevron-right text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-slate-400 p-8">
+            <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
+                <i class="fas fa-book-open text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-serif font-medium text-slate-600 mb-2">开始阅读</h2>
+            <p class="text-sm">从左侧选择一篇笔记开始浏览</p>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div id="contentWrapper" class="hidden h-full flex flex-col">
+            <!-- Top Bar -->
+            <div class="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200/60 z-30 px-6 py-3 flex justify-between items-center flex-shrink-0 transition-all duration-300" id="topBar">
+                <div class="flex items-center gap-4 text-sm text-slate-500 overflow-hidden">
+                    <button id="sidebarToggle" class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition focus:outline-none focus:ring-2 focus:ring-brand-500/20" title="Expand Sidebar">
+                        <i class="fas fa-chevron-right text-lg"></i>
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-home text-xs"></i>
+                        <span>/</span>
+                        <span id="docTitle" class="font-medium text-slate-800 truncate max-w-[200px] md:max-w-md">Document</span>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a id="githubLink" href="#" target="_blank" class="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition" title="View on GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Article Container -->
+            <article id="articleContainer" class="flex-1 flex flex-col bg-white shadow-sm border-x border-slate-100 overflow-y-auto custom-scroll">
+                <!-- Loader -->
+                <div id="loader" class="hidden py-20 flex justify-center">
+                    <i class="fas fa-circle-notch fa-spin text-brand-500 text-2xl"></i>
+                </div>
+
+                <!-- MD Content -->
+                <div id="mdContent" class="prose prose-slate prose-lg max-w-none hidden flex-1"></div>
+                
+                <!-- HTML Content (Iframe) -->
+                <div id="htmlContainer" class="hidden flex-1 w-full h-full">
+                    <iframe id="htmlFrame" class="w-full h-full border-0 bg-white" src=""></iframe>
+                </div>
+            </article>
+
+            <!-- Bottom Navigation (Simple Prev/Next - logic placeholder) -->
+            <div class="max-w-3xl mx-auto px-6 pb-12 flex justify-between text-sm font-medium text-brand-600 hidden" id="bottomNav">
+                <a href="#" class="hover:underline">← Previous</a>
+                <a href="#" class="hover:underline">Next →</a>
+            </div>
+        </div>
+
+    </main>
 
     <script>
         const GITHUB_USER = 'LFT-OXY';
         const GITHUB_REPO = 'html-manual';
         const BRANCH = 'main';
 
-        async function fetchNotes() {
-            const noteList = document.getElementById('noteList');
-            const stats = document.getElementById('stats');
+        // State
+        let allFiles = [];
+        let currentFilter = 'all';
 
-            try {
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents?ref=${BRANCH}`
-                );
+        // DOM Elements
+        const fileListEl = document.getElementById('fileList');
+        const searchInput = document.getElementById('searchInput');
+        const emptyState = document.getElementById('emptyState');
+        const contentWrapper = document.getElementById('contentWrapper');
+        const mdContent = document.getElementById('mdContent');
+        const htmlContainer = document.getElementById('htmlContainer');
+        const htmlFrame = document.getElementById('htmlFrame');
+        const loader = document.getElementById('loader');
+        const docTitle = document.getElementById('docTitle');
+        const githubLink = document.getElementById('githubLink');
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const emptyStateTopBar = document.getElementById('emptyStateTopBar');
+        const emptyStateSidebarToggle = document.getElementById('emptyStateSidebarToggle');
+        // contentWrapper already defined
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch');
+        // Sidebar Actions
+        function toggleSidebar(show) {
+            if (window.innerWidth >= 768) {
+                // Desktop
+                if (show) {
+                    sidebar.classList.add('md:w-80');
+                    sidebar.classList.remove('md:w-0', 'w-0');
+                    sidebarToggle.classList.add('hidden'); // Hide content top bar expand btn
+                    emptyStateTopBar.classList.add('hidden'); // Hide empty state expand btn
+                } else {
+                    sidebar.classList.remove('md:w-80');
+                    sidebar.classList.add('md:w-0', 'w-0');
+                    sidebarToggle.classList.remove('hidden'); // Show content top bar expand btn
+                    
+                    // Show empty state toggle ONLY if content wrapper is hidden (i.e. empty state is active)
+                    if (contentWrapper.classList.contains('hidden')) {
+                        emptyStateTopBar.classList.remove('hidden');
+                    }
                 }
-
-                const files = await response.json();
-
-                // Filter html and md files, exclude index.html
-                const notes = files.filter(file => {
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    return (ext === 'html' || ext === 'md') && file.name !== 'index.html';
-                });
-
-                if (notes.length === 0) {
-                    noteList.innerHTML = '<div class="error">暂无笔记</div>';
-                    return;
+            } else {
+                // Mobile
+                if (show) {
+                    sidebar.classList.remove('translate-y-full');
+                    sidebar.classList.add('translate-y-0');
+                } else {
+                    sidebar.classList.add('translate-y-full');
+                    sidebar.classList.remove('translate-y-0');
                 }
-
-                // Count by type
-                const htmlCount = notes.filter(n => n.name.endsWith('.html')).length;
-                const mdCount = notes.filter(n => n.name.endsWith('.md')).length;
-
-                stats.innerHTML = `
-                    <div class="stat-item">
-                        <div class="stat-num">${notes.length}</div>
-                        <div class="stat-label">总笔记</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-num">${htmlCount}</div>
-                        <div class="stat-label">HTML</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-num">${mdCount}</div>
-                        <div class="stat-label">Markdown</div>
-                    </div>
-                `;
-
-                // Render notes
-                noteList.innerHTML = notes.map(file => {
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    const title = file.name.replace(/\.(html|md)$/i, '');
-                    const icon = ext === 'html' ? '&lt;/&gt;' : '#';
-                    const sizeKB = (file.size / 1024).toFixed(1);
-
-                    return `
-                        <a href="${file.name}" class="note-item">
-                            <div class="note-icon ${ext}">${icon}</div>
-                            <div class="note-info">
-                                <div class="note-title">${title}</div>
-                                <div class="note-meta">${ext.toUpperCase()} · ${sizeKB} KB</div>
-                            </div>
-                        </a>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error(error);
-                noteList.innerHTML = `
-                    <div class="error">
-                        加载失败，请刷新重试<br>
-                        <small>${error.message}</small>
-                    </div>
-                `;
             }
         }
 
-        fetchNotes();
+        // Initialize Sidebar State (Open by default on desktop)
+        if (window.innerWidth >= 768) {
+             sidebarToggle.classList.add('hidden');
+        }
+
+        sidebarToggle.addEventListener('click', () => toggleSidebar(true));
+        sidebarCloseBtn.addEventListener('click', () => toggleSidebar(false));
+        emptyStateSidebarToggle.addEventListener('click', () => toggleSidebar(true)); // Add listener
+        
+        // Mobile Toggle
+        mobileMenuBtn.addEventListener('click', () => {
+             const isClosed = sidebar.classList.contains('translate-y-full');
+             toggleSidebar(isClosed);
+        });
+
+        // Initialize
+        init();
+
+        async function init() {
+            try {
+                // Change: Use Git Tree API with recursive=1 to get all files including subdirectories
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`);
+                
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                
+                // The Tree API returns an object with a 'tree' array
+                // We need to map it to match the structure our UI expects
+                allFiles = data.tree.filter(f => {
+                    const path = f.path.toLowerCase();
+                    // Filter: Must be a blob (file), end with md/html, and not start with index/ (in root or subfolder)
+                    const isFile = f.type === 'blob';
+                    const isContent = path.endsWith('.md') || path.endsWith('.html');
+                    const isNotIndex = !path.split('/').pop().startsWith('index'); 
+                    return isFile && isContent && isNotIndex;
+                }).map(f => ({
+                    ...f,
+                    // Adapter: Add fields that Tree API doesn't provide but UI needs
+                    name: f.path.split('/').pop(), // Extract filename from path
+                    path: f.path,                  // Path is already full path (e.g. "folder/doc.md")
+                    html_url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/blob/${BRANCH}/${f.path}` // Construct GitHub UI URL
+                }));
+
+                renderList(allFiles);
+
+            } catch (err) {
+                console.error(err);
+                fileListEl.innerHTML = `<div class="text-red-500 p-4 text-center text-sm">加载失败，请刷新重试<br><span class="text-xs opacity-75">${err.message}</span></div>`;
+            }
+        }
+
+        function renderList(files) {
+            fileListEl.innerHTML = '';
+            
+            if (files.length === 0) {
+                fileListEl.innerHTML = `<div class="text-slate-400 p-4 text-center text-sm">未找到相关笔记</div>`;
+                return;
+            }
+
+            files.forEach(file => {
+                const isMd = file.name.endsWith('.md');
+                const iconClass = isMd ? 'fa-markdown text-blue-500' : 'fa-html5 text-orange-500';
+                const name = file.name.replace(/\.(md|html)$/i, '');
+                const date = 'Recently updated'; // Placeholder as GitHub Content API doesn't give dates
+
+                const el = document.createElement('div');
+                el.className = 'nav-item group flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-slate-50 transition-all border-r-0 hover:border-r-0';
+                el.onclick = () => loadFile(file, el);
+                el.innerHTML = `
+                    <div class="mt-1 w-5 flex-shrink-0 text-center">
+                        <i class="fab ${iconClass} text-lg opacity-80 group-hover:opacity-100 transition"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <h4 class="text-sm font-medium text-slate-700 group-hover:text-slate-900 truncate transition">${name}</h4>
+                        <p class="text-[10px] text-slate-400 mt-0.5 truncate">${file.path}</p>
+                    </div>
+                `;
+                fileListEl.appendChild(el);
+            });
+        }
+
+        async function loadFile(file, el) {
+            // UI Update
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+            
+            // Mobile Sidebar Toggle
+            if (window.innerWidth < 768) {
+                toggleSidebar(false);
+            }
+
+            // Show Content Area
+            emptyState.classList.add('hidden');
+            emptyStateTopBar.classList.add('hidden'); // Ensure this is hidden when content loads
+            contentWrapper.classList.remove('hidden');
+            mdContent.classList.add('hidden');
+            htmlContainer.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            // Update Meta
+            docTitle.textContent = file.name.replace(/\.(md|html)$/i, '');
+            githubLink.href = file.html_url;
+
+            // Scroll to top
+            document.getElementById('mainContainer').scrollTop = 0;
+
+            const articleContainer = document.getElementById('articleContainer');
+            // Modified MD Classes: Removed max-w-3xl and mx-auto for full width
+            const mdClasses = ['px-6', 'py-12', 'md:px-12', 'md:py-16', 'w-full']; 
+
+            try {
+                if (file.name.endsWith('.md')) {
+                    // Apply MD Layout
+                    // Reset to scrollable container for MD
+                    articleContainer.className = 'flex-1 flex flex-col bg-white shadow-sm border-x border-slate-100 overflow-y-auto custom-scroll';
+                    articleContainer.classList.add(...mdClasses);
+                    
+                    const res = await fetch(file.url); // Use API URL to get base64
+                    const data = await res.json();
+                    const text = decodeURIComponent(escape(window.atob(data.content.replace(/\n/g, ""))));
+                    
+                    // Render Markdown
+                    mdContent.innerHTML = marked.parse(text);
+                    
+                    // Highlight Code & Add Mac Window Header
+                    mdContent.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                    
+                    // Add Mac Window Header to Pre blocks
+                    mdContent.querySelectorAll('pre').forEach(pre => {
+                        if (pre.querySelector('.code-header')) return; // Avoid duplicate
+                        
+                        const code = pre.querySelector('code');
+                        const langClass = [...code.classList].find(c => c.startsWith('language-'));
+                        const lang = langClass ? langClass.replace('language-', '') : 'text';
+                        
+                        const header = document.createElement('div');
+                        header.className = 'code-header cursor-pointer select-none'; // Added cursor pointer
+                        header.title = 'Click to toggle code visibility';
+                        header.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform duration-200 fold-icon"></i>
+                                <div class="window-controls">
+                                    <div class="control close"></div>
+                                    <div class="control minimize"></div>
+                                    <div class="control maximize"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 ml-auto">
+                                <span class="lang-badge">${lang}</span>
+                                <button class="copy-btn text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1" title="Copy code">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                            </div>
+                        `;
+                        
+                        // Toggle Code Folding
+                        header.addEventListener('click', (e) => {
+                            if (e.target.closest('.copy-btn')) return; // Ignore copy button clicks
+                            
+                            const isHidden = code.style.display === 'none';
+                            code.style.display = isHidden ? 'block' : 'none';
+                            
+                            // Rotate Icon
+                            const icon = header.querySelector('.fold-icon');
+                            if (isHidden) {
+                                icon.style.transform = 'rotate(0deg)';
+                            } else {
+                                icon.style.transform = 'rotate(-90deg)';
+                            }
+                        });
+
+                        // Copy Functionality
+                        const copyBtn = header.querySelector('.copy-btn');
+                        copyBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent folding
+                            const codeText = code.innerText;
+                            navigator.clipboard.writeText(codeText).then(() => {
+                                copyBtn.innerHTML = '<i class="fas fa-check text-green-500"></i>';
+                                setTimeout(() => {
+                                    copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                                }, 2000);
+                            });
+                        });
+
+                        pre.insertBefore(header, code);
+                    });
+
+                    mdContent.classList.remove('hidden');
+                    // Add fade animation
+                    mdContent.classList.remove('fade-enter-active');
+                    void mdContent.offsetWidth; // trigger reflow
+                    mdContent.classList.add('fade-enter', 'fade-enter-active');
+
+                } else {
+                    // HTML
+                    // Remove MD Layout for Fullscreen HTML
+                    articleContainer.className = 'flex-1 flex flex-col bg-white shadow-sm border-x border-slate-100 overflow-hidden'; // HTML needs no scroll on container, iframe has it
+
+                    htmlFrame.src = file.name; // Use relative path
+                    htmlContainer.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                mdContent.innerHTML = `<div class="p-6 bg-red-50 text-red-600 rounded-lg border border-red-100">无法加载文档内容: ${err.message}</div>`;
+                mdContent.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // Search Filter
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allFiles.filter(f => {
+                const matchName = f.name.toLowerCase().includes(term);
+                const matchType = currentFilter === 'all' ? true : f.name.toLowerCase().endsWith(currentFilter);
+                return matchName && matchType;
+            });
+            renderList(filtered);
+        });
+
+        // Type Filter (Fixed)
+        window.filterType = function(type, btn) {
+            currentFilter = type;
+            
+            // Update active state
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('text-brand-600', 'active');
+                tab.classList.add('hover:text-brand-600');
+            });
+            
+            if (btn) {
+                btn.classList.add('text-brand-600', 'active');
+                btn.classList.remove('hover:text-brand-600');
+            }
+            
+            // Re-trigger search logic to apply both filters
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
+        // Mobile Menu (Legacy, updated to use toggleSidebar)
+        // mobileMenuBtn logic handled above
     </script>
 </body>
 </html>
