@@ -452,10 +452,59 @@
                     
                     const res = await fetch(file.url); // Use API URL to get base64
                     const data = await res.json();
-                    const text = decodeURIComponent(escape(window.atob(data.content.replace(/\n/g, ""))));
-                    
+                    let text = decodeURIComponent(escape(window.atob(data.content.replace(/\n/g, ""))));
+
+                    // Pre-process: Convert wiki links [[file]] to standard markdown links
+                    text = text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, link, label) => {
+                        const displayText = label || link.split('/').pop();
+                        const href = link.endsWith('.md') ? link : link + '.md';
+                        return `[${displayText}](${href})`;
+                    });
+
                     // Render Markdown
                     mdContent.innerHTML = marked.parse(text);
+
+                    // Post-process: Intercept internal .md links
+                    const currentDir = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/') + 1) : '';
+                    mdContent.querySelectorAll('a[href]').forEach(a => {
+                        const href = a.getAttribute('href');
+                        if (href && (href.endsWith('.md') || href.endsWith('.html')) && !href.startsWith('http')) {
+                            a.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                // Resolve relative path
+                                let targetPath = href;
+                                if (href.startsWith('./')) {
+                                    targetPath = currentDir + href.substring(2);
+                                } else if (href.startsWith('../')) {
+                                    // Handle parent directory
+                                    let parts = currentDir.split('/').filter(p => p);
+                                    let hrefParts = href.split('/');
+                                    for (const part of hrefParts) {
+                                        if (part === '..') parts.pop();
+                                        else if (part !== '.') parts.push(part);
+                                    }
+                                    targetPath = parts.join('/');
+                                } else if (!href.includes('/')) {
+                                    targetPath = currentDir + href;
+                                }
+                                // Find and load target file
+                                const target = allFiles.find(f => f.path === targetPath || f.path.endsWith('/' + targetPath) || f.name === targetPath);
+                                if (target) {
+                                    loadFile(target, null);
+                                    // Update sidebar active state
+                                    document.querySelectorAll('.nav-item').forEach(item => {
+                                        item.classList.remove('active');
+                                        if (item.textContent.includes(target.name.replace(/\.(md|html)$/i, ''))) {
+                                            item.classList.add('active');
+                                        }
+                                    });
+                                } else {
+                                    alert('文档未找到: ' + targetPath);
+                                }
+                            });
+                            a.classList.add('internal-link', 'cursor-pointer');
+                        }
+                    });
                     
                     // Highlight Code & Add Mac Window Header
                     mdContent.querySelectorAll('pre code').forEach((block) => {
