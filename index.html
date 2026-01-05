@@ -128,12 +128,6 @@
             </div>
         </div>
 
-        <!-- Filter Tabs -->
-        <div id="filterTabs" class="flex px-6 gap-4 mt-2 mb-2 text-xs font-medium text-slate-500 border-b border-slate-100 pb-2 min-w-[20rem]">
-            <button class="filter-tab active text-brand-600 hover:text-brand-700 transition" data-type="all" onclick="filterType('all', this)">全部</button>
-            <button class="filter-tab hover:text-brand-600 transition" data-type="md" onclick="filterType('md', this)">Markdown</button>
-            <button class="filter-tab hover:text-brand-600 transition" data-type="html" onclick="filterType('html', this)">HTML</button>
-        </div>
 
         <!-- File List -->
         <div class="flex-1 overflow-y-auto p-3 space-y-1 custom-scroll min-w-[20rem]" id="fileList">
@@ -223,7 +217,6 @@
 
         // State
         let allFiles = [];
-        let currentFilter = 'all';
 
         // DOM Elements
         const fileListEl = document.getElementById('fileList');
@@ -555,32 +548,9 @@
         // Search Filter
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = allFiles.filter(f => {
-                const matchName = f.name.toLowerCase().includes(term);
-                const matchType = currentFilter === 'all' ? true : f.name.toLowerCase().endsWith(currentFilter);
-                return matchName && matchType;
-            });
+            const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term) || f.path.toLowerCase().includes(term));
             renderList(filtered);
         });
-
-        // Type Filter (Fixed)
-        window.filterType = function(type, btn) {
-            currentFilter = type;
-            
-            // Update active state
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('text-brand-600', 'active');
-                tab.classList.add('hover:text-brand-600');
-            });
-            
-            if (btn) {
-                btn.classList.add('text-brand-600', 'active');
-                btn.classList.remove('hover:text-brand-600');
-            }
-            
-            // Re-trigger search logic to apply both filters
-            searchInput.dispatchEvent(new Event('input'));
-        }
 
         // Mobile Menu (Legacy, updated to use toggleSidebar)
         // mobileMenuBtn logic handled above
