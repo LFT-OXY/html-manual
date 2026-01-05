@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vibe Kanban 深度学习指南 - AI 编码代理任务编排平台完整教程">
+    <title>Vibe Kanban 深度学习指南 | AI 编码代理任务编排平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #FFFEFC;
+            --bg-card: #FFFFFF;
+            --text-primary: #2D2D2D;
+            --text-secondary: #4A4644;
+            --highlight-concept: #E6F4F1;
+            --accent-primary: #FF4F00;
+            --link-color: #2E6BE6;
+            --path-color: #6366F1;
+            --success-color: #2F9E44;
+            --warning-color: #F08C00;
+            --error-color: #D63939;
+            --border-light: #E8E6E3;
+            --shadow-soft: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.1);
+            --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+            --font-heading: 'Fraunces', Georgia, serif;
+            --font-body: 'Public Sans', system-ui, sans-serif;
+            --font-code: 'Fira Code', Consolas, monospace;
+            --max-width: 1200px;
+            --sidebar-width: 280px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 17px;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+            transition: color 220ms var(--transition-smooth);
+        }
+
+        a:hover {
+            color: var(--accent-primary);
+        }
+
+        a:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-light);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .sidebar-logo {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-logo::before {
+            content: '◈';
+            color: var(--accent-primary);
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+            background: var(--border-light);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--path-color));
+            width: 0%;
+            transition: width 300ms var(--transition-smooth);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 0.6rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        .nav-link:hover {
+            background: var(--highlight-concept);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            border-left-color: var(--accent-primary);
+            background: rgba(255, 79, 0, 0.05);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .back-to-top {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+            padding: 0.5rem 0;
+            width: 100%;
+            text-align: left;
+        }
+
+        .back-to-top:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 200;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .menu-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 5px 0;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 6rem 0 4rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero-badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .badge.difficulty-intermediate {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--path-color);
+            color: var(--path-color);
+        }
+
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            background: var(--accent-primary);
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        .hero-cta:hover {
+            background: #E64600;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 79, 0, 0.3);
+        }
+
+        .source-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 4rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-header h2::before {
+            content: attr(data-number);
+            font-size: 0.9rem;
+            font-family: var(--font-code);
+            color: var(--accent-primary);
+            background: rgba(255, 79, 0, 0.1);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .anchor-link {
+            opacity: 0;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+            font-size: 0.8em;
+            transition: opacity 220ms var(--transition-smooth);
+        }
+
+        h2:hover .anchor-link,
+        h3:hover .anchor-link {
+            opacity: 1;
+        }
+
+        /* Learning Objectives */
+        .objectives-list {
+            list-style: none;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .objectives-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+        }
+
+        .objectives-list .check-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        /* TL;DR Card */
+        .tldr-card {
+            background: var(--highlight-concept);
+            border-radius: 12px;
+            padding: 2rem;
+            border-left: 4px solid var(--path-color);
+        }
+
+        .tldr-card h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--path-color);
+        }
+
+        /* Concept Map */
+        .concept-map {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .concept-map svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-hover);
+            }
+        }
+
+        .card h4 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tooltip */
+        .tooltip-term {
+            border-bottom: 1px dashed var(--text-secondary);
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip-term:hover::after,
+        .tooltip-term:focus::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            max-width: 300px;
+            white-space: normal;
+            z-index: 10;
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Split Layout */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .explanation-panel {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .explanation-panel h3 {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .why-block, .how-block, .when-block {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .why-block {
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 3px solid var(--path-color);
+        }
+
+        .how-block {
+            background: rgba(47, 158, 68, 0.08);
+            border-left: 3px solid var(--success-color);
+        }
+
+        .when-block {
+            background: rgba(255, 79, 0, 0.08);
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .why-block .label { color: var(--path-color); }
+        .how-block .label { color: var(--success-color); }
+        .when-block .label { color: var(--accent-primary); }
+
+        /* Code Panel */
+        .code-panel {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .code-block {
+            background: #1E1E1E;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #2D2D2D;
+            border-bottom: 1px solid #3D3D3D;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dots span:nth-child(1) { background: #FF5F56; }
+        .code-dots span:nth-child(2) { background: #FFBD2E; }
+        .code-dots span:nth-child(3) { background: #27CA40; }
+
+        .code-filename {
+            font-family: var(--font-code);
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #555;
+            color: #888;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 180ms var(--transition-smooth);
+        }
+
+        .copy-btn:hover {
+            background: #3D3D3D;
+            color: #CCC;
+        }
+
+        .code-content {
+            padding: 1.25rem;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #D4D4D4;
+        }
+
+        .code-content .comment { color: #6A9955; }
+        .code-content .keyword { color: #569CD6; }
+        .code-content .string { color: #CE9178; }
+        .code-content .function { color: #DCDCAA; }
+        .code-content .variable { color: #9CDCFE; }
+        .code-content .number { color: #B5CEA8; }
+        .code-content .operator { color: #D4D4D4; }
+        .code-content .prompt { color: #6A9955; }
+        .code-content .output { color: #888; }
+
+        .line-highlight {
+            background: rgba(255, 79, 0, 0.15);
+            margin: 0 -1.25rem;
+            padding: 0 1.25rem;
+            display: block;
+        }
+
+        /* Comparison Table */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .comparison-card {
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid;
+        }
+
+        .comparison-card.bad {
+            background: rgba(214, 57, 57, 0.05);
+            border-color: var(--error-color);
+        }
+
+        .comparison-card.good {
+            background: rgba(47, 158, 68, 0.05);
+            border-color: var(--success-color);
+        }
+
+        .comparison-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-heading);
+            margin-bottom: 1rem;
+        }
+
+        .comparison-card.bad h4 { color: var(--error-color); }
+        .comparison-card.good h4 { color: var(--success-color); }
+
+        /* Tab Navigation */
+        .tabs-container {
+            margin-top: 2rem;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 0;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            background: none;
+            border: none;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 180ms var(--transition-smooth);
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .tab-btn:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .example-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--highlight-concept);
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            font-size: 0.9rem;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        /* Terminal Simulator */
+        .terminal {
+            background: #0D1117;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .terminal-header {
+            background: #161B22;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-title {
+            font-family: var(--font-code);
+            font-size: 0.8rem;
+            color: #8B949E;
+        }
+
+        .terminal-body {
+            padding: 1rem 1.25rem;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .terminal-line {
+            margin: 0.25rem 0;
+        }
+
+        .terminal-prompt {
+            color: #7EE787;
+        }
+
+        .terminal-command {
+            color: #C9D1D9;
+        }
+
+        .terminal-output {
+            color: #8B949E;
+        }
+
+        .terminal-success {
+            color: #7EE787;
+        }
+
+        .terminal-error {
+            color: #F85149;
+        }
+
+        /* Steps List */
+        .steps-list {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .steps-list li {
+            counter-increment: step;
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .steps-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .step-why {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Vocabulary Grid */
+        .vocab-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .vocab-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .vocab-term {
+            font-family: var(--font-code);
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .vocab-def {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        /* Troubleshooting */
+        .trouble-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .trouble-table th,
+        .trouble-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .trouble-table th {
+            background: var(--highlight-concept);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .trouble-table td {
+            font-size: 0.95rem;
+        }
+
+        .error-code {
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            background: rgba(214, 57, 57, 0.1);
+            color: var(--error-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        /* Accordion */
+        details {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        details summary {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::before {
+            content: '▶';
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            transition: transform 180ms var(--transition-smooth);
+        }
+
+        details[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        details .content {
+            padding: 0 1.25rem 1.25rem;
+        }
+
+        /* Cheat Sheet */
+        .cheat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .cheat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .cheat-card h4 {
+            background: var(--highlight-concept);
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .cheat-content {
+            padding: 1rem;
+        }
+
+        .cheat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+
+        .cheat-item:last-child {
+            border-bottom: none;
+        }
+
+        .cheat-cmd {
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            background: #1E1E1E;
+            color: #D4D4D4;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .cheat-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Quiz */
+        .quiz-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .quiz-number {
+            background: var(--path-color);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .quiz-options {
+            list-style: none;
+        }
+
+        .quiz-option {
+            margin: 0.5rem 0;
+        }
+
+        .quiz-option label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 180ms var(--transition-smooth);
+        }
+
+        .quiz-option label:hover {
+            background: var(--highlight-concept);
+            border-color: var(--path-color);
+        }
+
+        .quiz-option input {
+            display: none;
+        }
+
+        .quiz-option .radio {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 180ms var(--transition-smooth);
+        }
+
+        .quiz-option input:checked + label .radio {
+            border-color: var(--success-color);
+            background: var(--success-color);
+        }
+
+        .quiz-option input:checked + label .radio::after {
+            content: '✓';
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        .quiz-option.correct label {
+            background: rgba(47, 158, 68, 0.1);
+            border-color: var(--success-color);
+        }
+
+        .quiz-option.incorrect label {
+            background: rgba(214, 57, 57, 0.1);
+            border-color: var(--error-color);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .quiz-option.incorrect label {
+                animation: shake 0.4s ease-in-out;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        .quiz-explanation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--highlight-concept);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .quiz-explanation.show {
+            display: block;
+        }
+
+        /* Action Steps */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .action-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .action-card h4 {
+            font-family: var(--font-heading);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-card ul {
+            list-style: none;
+        }
+
+        .action-card li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .action-card li::before {
+            content: '→';
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .page-footer {
+            padding: 3rem 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .footer-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .footer-item {
+            font-size: 0.9rem;
+        }
+
+        .footer-item strong {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        /* Floating Elements */
+        .floating-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            background: var(--accent-primary);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 12px rgba(255, 79, 0, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        .floating-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-top:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(255, 79, 0, 0.4);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 200;
+            opacity: 0;
+            transition: all 220ms var(--transition-smooth);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .code-panel {
+                position: static;
+            }
+
+            .explanation-panel {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 300ms var(--transition-smooth);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 5rem 0 3rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs-nav {
+                flex-wrap: wrap;
+            }
+
+            .floating-top {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        /* Scrollytelling Highlight */
+        .scrolly-section {
+            margin: 2rem 0;
+        }
+
+        .scrolly-step {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 3px solid var(--border-light);
+            opacity: 0.5;
+            transition: all 300ms var(--transition-smooth);
+        }
+
+        .scrolly-step.active {
+            opacity: 1;
+            border-left-color: var(--accent-primary);
+            background: rgba(255, 79, 0, 0.03);
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .mode-toggle input {
+            display: none;
+        }
+
+        .mode-toggle label {
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            transition: all 180ms var(--transition-smooth);
+        }
+
+        .mode-toggle input:checked + label {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .advanced-content {
+            display: none;
+        }
+
+        body.full-mode .advanced-content {
+            display: block;
+        }
+
+        /* Feature Icons */
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--highlight-concept);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: rgba(47, 158, 68, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" aria-label="打开菜单" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" role="navigation" aria-label="主导航">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Vibe Kanban</div>
+            <div class="progress-container">
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="#hero" class="nav-link active">首页</a></li>
+                <li class="nav-item"><a href="#objectives" class="nav-link">学习目标</a></li>
+                <li class="nav-item"><a href="#tldr" class="nav-link">核心摘要</a></li>
+                <li class="nav-item"><a href="#concept-map" class="nav-link">概念图</a></li>
+                <li class="nav-item"><a href="#foundations" class="nav-link">基础知识</a></li>
+                <li class="nav-item"><a href="#detailed" class="nav-link">详细讲解</a></li>
+                <li class="nav-item"><a href="#patterns" class="nav-link">模式对比</a></li>
+                <li class="nav-item"><a href="#examples" class="nav-link">完整示例</a></li>
+                <li class="nav-item"><a href="#vocabulary" class="nav-link">术语词汇</a></li>
+                <li class="nav-item"><a href="#troubleshooting" class="nav-link">故障排除</a></li>
+                <li class="nav-item"><a href="#cheatsheet" class="nav-link">速查表</a></li>
+                <li class="nav-item"><a href="#assessment" class="nav-link">自测评估</a></li>
+                <li class="nav-item"><a href="#actions" class="nav-link">行动步骤</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="back-to-top" aria-label="返回顶部">
+                ↑ 返回顶部
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <header class="hero" id="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge-row">
+                        <span class="badge difficulty-intermediate">◆ 中级难度</span>
+                        <span class="badge">⏱ 预计 25 分钟</span>
+                        <span class="badge">📋 前置: 终端基础, Node.js</span>
+                        <span class="badge status-badge active">活跃维护</span>
+                    </div>
+                    <h1>Vibe Kanban<br>AI 编码代理任务编排平台</h1>
+                    <p class="hero-subtitle">
+                        掌握多 AI 编码代理（Claude Code, Gemini CLI, Codex）的并行协作，实现 10 倍开发效率提升
+                    </p>
+                    <a href="#examples" class="hero-cta">开始学习 →</a>
+                    <a href="https://github.com/BloopAI/vibe-kanban" class="source-link" target="_blank" rel="noopener">
+                        GitHub 源码 ↗
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Learning Objectives -->
+        <section id="objectives">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="01">学习目标 <a href="#objectives" class="anchor-link">#</a></h2>
+                </div>
+                <ul class="objectives-list">
+                    <li>
+                        <span class="check-icon">✓</span>
+                        <div>
+                            <strong>理解 Vibe Kanban 核心价值</strong>
+                            <p>掌握为什么需要 AI 代理编排工具，以及它如何改变开发工作流</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="check-icon">✓</span>
+                        <div>
+                            <strong>配置多代理环境</strong>
+                            <p>学会设置 Claude Code、Gemini CLI、Codex 等代理并进行身份验证</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="check-icon">✓</span>
+                        <div>
+                            <strong>执行并行与顺序任务</strong>
+                            <p>掌握任务分配策略，让多个 AI 代理协同工作</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="check-icon">✓</span>
+                        <div>
+                            <strong>配置 MCP 和远程部署</strong>
+                            <p>理解 Model Context Protocol 集中配置与 SSH 远程访问机制</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- TL;DR -->
+        <section id="tldr">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="02">TL;DR 核心摘要 <a href="#tldr" class="anchor-link">#</a></h2>
+                </div>
+                <div class="tldr-card">
+                    <h3>30 秒了解 Vibe Kanban</h3>
+                    <p>
+                        <strong>Vibe Kanban</strong> 是一个任务编排平台，让你能够同时管理多个 AI 编码代理（如 Claude Code、Gemini CLI、Codex）。通过看板界面，你可以将编码任务分配给不同代理并行执行，实时监控进度，并统一管理 MCP 配置。一条命令 <code>npx vibe-kanban</code> 即可启动，支持本地和远程（SSH）部署。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Concept Map -->
+        <section id="concept-map">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="03">概念图 <a href="#concept-map" class="anchor-link">#</a></h2>
+                </div>
+                <div class="concept-map">
+                    <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Background -->
+                        <rect fill="none" width="800" height="400"/>
+
+                        <!-- Central Node: Vibe Kanban -->
+                        <rect x="320" y="160" width="160" height="80" rx="12" fill="#FF4F00" opacity="0.1" stroke="#FF4F00" stroke-width="2"/>
+                        <text x="400" y="195" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="14" fill="#FF4F00">Vibe Kanban</text>
+                        <text x="400" y="215" text-anchor="middle" font-family="Public Sans" font-size="11" fill="#4A4644">任务编排中心</text>
+
+                        <!-- Start Point -->
+                        <circle cx="80" cy="200" r="25" fill="#6366F1" opacity="0.15" stroke="#6366F1" stroke-width="2"/>
+                        <text x="80" y="205" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="11" fill="#6366F1">开始</text>
+
+                        <!-- Arrow from Start to Center -->
+                        <path d="M 105 200 L 310 200" stroke="#6366F1" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+                        <!-- AI Agents -->
+                        <g transform="translate(620, 80)">
+                            <rect x="0" y="0" width="140" height="50" rx="8" fill="#2F9E44" opacity="0.1" stroke="#2F9E44" stroke-width="1.5"/>
+                            <text x="70" y="22" text-anchor="middle" font-family="Fira Code" font-size="11" fill="#2F9E44">Claude Code</text>
+                            <text x="70" y="38" text-anchor="middle" font-family="Public Sans" font-size="10" fill="#4A4644">逻辑 / 分析</text>
+                        </g>
+
+                        <g transform="translate(620, 175)">
+                            <rect x="0" y="0" width="140" height="50" rx="8" fill="#2E6BE6" opacity="0.1" stroke="#2E6BE6" stroke-width="1.5"/>
+                            <text x="70" y="22" text-anchor="middle" font-family="Fira Code" font-size="11" fill="#2E6BE6">Gemini CLI</text>
+                            <text x="70" y="38" text-anchor="middle" font-family="Public Sans" font-size="10" fill="#4A4644">前端 / 创意</text>
+                        </g>
+
+                        <g transform="translate(620, 270)">
+                            <rect x="0" y="0" width="140" height="50" rx="8" fill="#F08C00" opacity="0.1" stroke="#F08C00" stroke-width="1.5"/>
+                            <text x="70" y="22" text-anchor="middle" font-family="Fira Code" font-size="11" fill="#F08C00">Codex CLI</text>
+                            <text x="70" y="38" text-anchor="middle" font-family="Public Sans" font-size="10" fill="#4A4644">代码生成</text>
+                        </g>
+
+                        <!-- Connections from Center to Agents -->
+                        <path d="M 480 180 L 610 105" stroke="#2D2D2D" stroke-width="1.5" fill="none" opacity="0.4"/>
+                        <path d="M 480 200 L 610 200" stroke="#2D2D2D" stroke-width="1.5" fill="none" opacity="0.4"/>
+                        <path d="M 480 220 L 610 295" stroke="#2D2D2D" stroke-width="1.5" fill="none" opacity="0.4"/>
+
+                        <!-- Supporting Concepts -->
+                        <g transform="translate(200, 40)">
+                            <rect x="0" y="0" width="120" height="40" rx="6" fill="#E6F4F1" stroke="#6366F1" stroke-width="1"/>
+                            <text x="60" y="25" text-anchor="middle" font-family="Public Sans" font-size="11" fill="#2D2D2D">MCP 配置</text>
+                        </g>
+
+                        <g transform="translate(480, 40)">
+                            <rect x="0" y="0" width="120" height="40" rx="6" fill="#E6F4F1" stroke="#6366F1" stroke-width="1"/>
+                            <text x="60" y="25" text-anchor="middle" font-family="Public Sans" font-size="11" fill="#2D2D2D">任务监控</text>
+                        </g>
+
+                        <g transform="translate(200, 320)">
+                            <rect x="0" y="0" width="120" height="40" rx="6" fill="#E6F4F1" stroke="#6366F1" stroke-width="1"/>
+                            <text x="60" y="25" text-anchor="middle" font-family="Public Sans" font-size="11" fill="#2D2D2D">SSH 远程</text>
+                        </g>
+
+                        <g transform="translate(480, 320)">
+                            <rect x="0" y="0" width="120" height="40" rx="6" fill="#E6F4F1" stroke="#6366F1" stroke-width="1"/>
+                            <text x="60" y="25" text-anchor="middle" font-family="Public Sans" font-size="11" fill="#2D2D2D">并行执行</text>
+                        </g>
+
+                        <!-- Connecting lines to supporting concepts -->
+                        <path d="M 320 180 L 260 80" stroke="#6366F1" stroke-width="1" stroke-dasharray="4,4" fill="none" opacity="0.5"/>
+                        <path d="M 480 180 L 540 80" stroke="#6366F1" stroke-width="1" stroke-dasharray="4,4" fill="none" opacity="0.5"/>
+                        <path d="M 320 220 L 260 320" stroke="#6366F1" stroke-width="1" stroke-dasharray="4,4" fill="none" opacity="0.5"/>
+                        <path d="M 480 220 L 540 320" stroke="#6366F1" stroke-width="1" stroke-dasharray="4,4" fill="none" opacity="0.5"/>
+
+                        <!-- Arrow marker definition -->
+                        <defs>
+                            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                                <path d="M0,0 L0,6 L9,3 z" fill="#6366F1"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Foundations -->
+        <section id="foundations">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="04">基础知识 <a href="#foundations" class="anchor-link">#</a></h2>
+                </div>
+
+                <h3 style="font-family: var(--font-heading); margin-bottom: 1.5rem;">先决条件</h3>
+                <div class="cards-grid" style="margin-bottom: 3rem;">
+                    <div class="card">
+                        <div class="feature-icon">📦</div>
+                        <h4>Node.js v18+</h4>
+                        <p>运行 npx 命令和前端构建所需的 JavaScript 运行时环境</p>
+                    </div>
+                    <div class="card">
+                        <div class="feature-icon">🔐</div>
+                        <h4>代理身份验证</h4>
+                        <p>需要预先完成 Claude Code / Gemini CLI / Codex 的登录认证</p>
+                    </div>
+                    <div class="card">
+                        <div class="feature-icon">💻</div>
+                        <h4>终端基础</h4>
+                        <p>熟悉命令行操作，能够执行 npm/npx 命令</p>
+                    </div>
+                </div>
+
+                <h3 style="font-family: var(--font-heading); margin-bottom: 1.5rem;">关键术语</h3>
+                <div class="vocab-grid" style="margin-bottom: 3rem;">
+                    <div class="vocab-card">
+                        <div class="vocab-term">AI Coding Agent</div>
+                        <div class="vocab-def">能够理解自然语言指令并生成、修改代码的 AI 工具，如 Claude Code</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">MCP (Model Context Protocol)</div>
+                        <div class="vocab-def">模型上下文协议，用于 AI 代理与外部工具、数据源交互的标准化协议</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">Task Orchestration</div>
+                        <div class="vocab-def">任务编排，协调多个代理执行复杂工作流的过程</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">Worktree</div>
+                        <div class="vocab-def">Git 工作树，允许同一仓库同时检出多个分支的功能</div>
+                    </div>
+                </div>
+
+                <h3 style="font-family: var(--font-heading); margin-bottom: 1.5rem;">常见误区</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-card bad">
+                        <h4>❌ 误区</h4>
+                        <p><strong>"Vibe Kanban 是另一个 AI 代理"</strong></p>
+                        <p style="margin-top: 0.5rem; font-size: 0.95rem; color: var(--text-secondary);">
+                            错误。Vibe Kanban 本身不是 AI，而是管理和编排现有 AI 代理的工具层。
+                        </p>
+                    </div>
+                    <div class="comparison-card good">
+                        <h4>✓ 正确理解</h4>
+                        <p><strong>"Vibe Kanban 是代理的调度器"</strong></p>
+                        <p style="margin-top: 0.5rem; font-size: 0.95rem; color: var(--text-secondary);">
+                            它类似于 Kubernetes 调度容器，Vibe Kanban 调度 AI 代理执行任务。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Explanations -->
+        <section id="detailed">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="05">详细讲解 <a href="#detailed" class="anchor-link">#</a></h2>
+                </div>
+
+                <div class="mode-toggle">
+                    <span>显示模式:</span>
+                    <input type="radio" name="mode" id="mode-basic" checked>
+                    <label for="mode-basic">基础</label>
+                    <input type="radio" name="mode" id="mode-full">
+                    <label for="mode-full">完整</label>
+                </div>
+
+                <div class="split-layout">
+                    <div class="explanation-panel">
+                        <h3>核心架构</h3>
+
+                        <div class="why-block">
+                            <span class="label">WHY 为什么需要</span>
+                            <p>当你同时使用多个 AI 代理时，手动切换窗口、复制粘贴上下文、跟踪各自进度会产生巨大的认知负担。Vibe Kanban 通过统一界面消除这些摩擦，让你专注于任务本身。</p>
+                        </div>
+
+                        <div class="how-block">
+                            <span class="label">HOW 如何工作</span>
+                            <p>Vibe Kanban 使用 Rust 后端处理代理进程管理和任务调度，TypeScript/React 前端提供看板界面。通过 WebSocket 实现实时状态同步。</p>
+                        </div>
+
+                        <div class="when-block">
+                            <span class="label">WHEN 适用场景</span>
+                            <p>• 需要并行处理多个独立功能模块<br>
+                            • 希望让不同代理处理各自擅长的任务<br>
+                            • 远程服务器上运行代理并本地监控</p>
+                        </div>
+
+                        <div class="advanced-content">
+                            <details>
+                                <summary>深入了解: Rust 后端选型原因</summary>
+                                <div class="content">
+                                    <p>Rust 提供了：</p>
+                                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                        <li>内存安全保证，适合长时间运行的服务</li>
+                                        <li>优秀的并发原语（async/await）</li>
+                                        <li>低资源占用，适合 CLI 工具</li>
+                                        <li>与 Node.js 进程的高效 IPC</li>
+                                    </ul>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <div class="code-panel">
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="code-filename">architecture.txt</span>
+                                <button class="copy-btn" data-code="architecture">复制</button>
+                            </div>
+                            <div class="code-content">
+<pre>
+┌─────────────────────────────────────────┐
+│           <span class="keyword">Vibe Kanban UI</span>               │
+│         (React + TypeScript)            │
+└────────────────┬────────────────────────┘
+                 │ WebSocket
+                 ▼
+┌─────────────────────────────────────────┐
+│           <span class="keyword">Rust Backend</span>                 │
+│  ┌──────────┬──────────┬──────────┐    │
+│  │ Task     │ Agent    │ MCP      │    │
+│  │ Scheduler│ Manager  │ Router   │    │
+│  └────┬─────┴────┬─────┴────┬─────┘    │
+└───────┼──────────┼──────────┼──────────┘
+        │          │          │
+   ┌────▼───┐ ┌────▼───┐ ┌────▼───┐
+   │<span class="function">Claude</span>  │ │<span class="function">Gemini</span> │ │<span class="function">Codex</span>  │
+   │ Code   │ │ CLI    │ │ CLI    │
+   └────────┘ └────────┘ └────────┘
+</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checkpoint Quiz -->
+                <div class="quiz-container" style="margin-top: 2rem;">
+                    <div class="quiz-question">
+                        <span class="quiz-number">?</span>
+                        <span>检查点: Vibe Kanban 后端使用什么语言构建？</span>
+                    </div>
+                    <ul class="quiz-options">
+                        <li class="quiz-option">
+                            <input type="radio" name="checkpoint1" id="c1a" value="a">
+                            <label for="c1a">
+                                <span class="radio"></span>
+                                Python
+                            </label>
+                        </li>
+                        <li class="quiz-option" data-correct="true">
+                            <input type="radio" name="checkpoint1" id="c1b" value="b">
+                            <label for="c1b">
+                                <span class="radio"></span>
+                                Rust
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="checkpoint1" id="c1c" value="c">
+                            <label for="c1c">
+                                <span class="radio"></span>
+                                Go
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="quiz-explanation">
+                        正确！Vibe Kanban 使用 Rust（占代码库 57.9%）构建后端，利用其内存安全和并发优势。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Patterns Comparison -->
+        <section id="patterns">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="06">反模式 vs 最佳实践 <a href="#patterns" class="anchor-link">#</a></h2>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comparison-card bad">
+                        <h4>❌ 反模式: 串行阻塞</h4>
+                        <div class="code-block" style="margin: 1rem 0;">
+                            <div class="code-content">
+<pre><span class="comment"># 低效：一个接一个等待</span>
+<span class="variable">task1</span> = claude.run(<span class="string">"写登录页"</span>)
+<span class="variable">await</span> task1  <span class="comment"># 等待完成</span>
+<span class="variable">task2</span> = gemini.run(<span class="string">"写样式"</span>)
+<span class="variable">await</span> task2  <span class="comment"># 再等待</span>
+<span class="comment"># 总时间 = task1 + task2</span></pre>
+                            </div>
+                        </div>
+                        <p><strong>问题:</strong> 独立任务不应该相互等待，浪费时间。</p>
+                    </div>
+
+                    <div class="comparison-card good">
+                        <h4>✓ 最佳实践: 并行执行</h4>
+                        <div class="code-block" style="margin: 1rem 0;">
+                            <div class="code-content">
+<pre><span class="comment"># 高效：并行启动</span>
+<span class="variable">task1</span> = claude.run(<span class="string">"写登录逻辑"</span>)
+<span class="variable">task2</span> = gemini.run(<span class="string">"写登录样式"</span>)
+<span class="variable">await</span> Promise.all([task1, task2])
+<span class="comment"># 总时间 = max(task1, task2)</span></pre>
+                            </div>
+                        </div>
+                        <p><strong>优势:</strong> 独立任务并行执行，总时间取决于最长任务。</p>
+                    </div>
+                </div>
+
+                <div class="comparison-grid" style="margin-top: 2rem;">
+                    <div class="comparison-card bad">
+                        <h4>❌ 反模式: 无验证直接执行</h4>
+                        <p>直接让代理修改生产代码，不审查不测试。</p>
+                        <p style="margin-top: 0.5rem;"><strong>风险:</strong> AI 可能引入 bug、安全漏洞或破坏现有功能。</p>
+                    </div>
+
+                    <div class="comparison-card good">
+                        <h4>✓ 最佳实践: 分支隔离 + 审查</h4>
+                        <p>使用 Git Worktree 在独立分支工作，完成后 Code Review。</p>
+                        <p style="margin-top: 0.5rem;"><strong>优势:</strong> 变更可追溯、可回滚、可审计。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Complete Examples -->
+        <section id="examples">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="07">完整示例 <a href="#examples" class="anchor-link">#</a></h2>
+                </div>
+
+                <div class="tabs-container">
+                    <div class="tabs-nav" role="tablist">
+                        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="basic">Basic 基础用法</button>
+                        <button class="tab-btn" role="tab" aria-selected="false" data-tab="edge">Edge Case 边界情况</button>
+                        <button class="tab-btn" role="tab" aria-selected="false" data-tab="advanced">Advanced 高级配置</button>
+                        <button class="tab-btn" role="tab" aria-selected="false" data-tab="error">Error Handling 错误处理</button>
+                    </div>
+
+                    <!-- Basic Tab -->
+                    <div class="tab-panel active" id="panel-basic" role="tabpanel">
+                        <div class="example-meta">
+                            <div class="meta-item">
+                                <strong>场景</strong>
+                                首次启动 Vibe Kanban，快速体验基础功能
+                            </div>
+                            <div class="meta-item">
+                                <strong>前提</strong>
+                                已安装 Node.js v18+，已认证至少一个 AI 代理
+                            </div>
+                            <div class="meta-item">
+                                <strong>预期结果</strong>
+                                打开浏览器看板界面，可创建和分配任务
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">逐步操作</h4>
+                        <ol class="steps-list">
+                            <li>
+                                <strong>验证 Node.js 版本</strong>
+                                <span class="step-why">WHY: Vibe Kanban 需要 Node.js 18+ 的 ES 模块支持</span>
+                            </li>
+                            <li>
+                                <strong>确认代理认证状态</strong>
+                                <span class="step-why">WHY: 没有认证的代理将无法执行任务</span>
+                            </li>
+                            <li>
+                                <strong>启动 Vibe Kanban</strong>
+                                <span class="step-why">WHY: npx 自动下载最新版本，无需全局安装</span>
+                            </li>
+                            <li>
+                                <strong>访问 Web 界面</strong>
+                                <span class="step-why">WHY: 默认在 localhost:3000 启动前端服务</span>
+                            </li>
+                        </ol>
+
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <div class="code-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <span class="terminal-title">Terminal — zsh</span>
+                            </div>
+                            <div class="terminal-body">
+                                <div class="terminal-line">
+                                    <span class="terminal-prompt">$ </span>
+                                    <span class="terminal-command">node --version</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">v20.10.0</span>
+                                </div>
+                                <div class="terminal-line" style="margin-top: 0.5rem;">
+                                    <span class="terminal-prompt">$ </span>
+                                    <span class="terminal-command">claude --version</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">claude-code v1.0.42</span>
+                                </div>
+                                <div class="terminal-line" style="margin-top: 0.5rem;">
+                                    <span class="terminal-prompt">$ </span>
+                                    <span class="terminal-command">npx vibe-kanban</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">🚀 Starting Vibe Kanban...</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">📦 Checking for updates...</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-success">✓ Server running at http://localhost:3000</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-success">✓ Detected agents: claude-code, gemini</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin: 1.5rem 0 1rem;">变体: 指定端口</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="code-filename">bash</span>
+                                <button class="copy-btn">复制</button>
+                            </div>
+                            <div class="code-content">
+<pre><span class="comment"># 自定义端口启动</span>
+<span class="variable">PORT</span>=<span class="number">8080</span> npx vibe-kanban
+
+<span class="comment"># 分别指定前后端端口</span>
+<span class="variable">FRONTEND_PORT</span>=<span class="number">3001</span> <span class="variable">BACKEND_PORT</span>=<span class="number">4000</span> npx vibe-kanban</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edge Case Tab -->
+                    <div class="tab-panel" id="panel-edge" role="tabpanel">
+                        <div class="example-meta">
+                            <div class="meta-item">
+                                <strong>场景</strong>
+                                处理代理超时、网络断开、无效输入等异常
+                            </div>
+                            <div class="meta-item">
+                                <strong>前提</strong>
+                                Vibe Kanban 已启动，任务执行中遇到问题
+                            </div>
+                            <div class="meta-item">
+                                <strong>预期结果</strong>
+                                优雅处理异常，提供清晰错误信息
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">场景 1: 代理认证过期</h4>
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="terminal-title">Terminal — Error State</span>
+                            </div>
+                            <div class="terminal-body">
+                                <div class="terminal-line">
+                                    <span class="terminal-prompt">$ </span>
+                                    <span class="terminal-command">npx vibe-kanban</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-error">⚠ Warning: claude-code authentication expired</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">→ Run 'claude login' to re-authenticate</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-success">✓ Continuing with available agents: gemini, codex</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p style="margin: 1rem 0;"><strong>处理方式:</strong> Vibe Kanban 会自动降级，仅使用可用代理继续运行。你可以在另一个终端重新认证，无需重启服务。</p>
+
+                        <h4 style="font-family: var(--font-heading); margin: 1.5rem 0 1rem;">场景 2: 任务执行超时</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="code-filename">处理策略</span>
+                            </div>
+                            <div class="code-content">
+<pre><span class="comment">// Vibe Kanban 内置超时处理</span>
+{
+  <span class="string">"task"</span>: <span class="string">"实现复杂算法"</span>,
+  <span class="string">"agent"</span>: <span class="string">"claude-code"</span>,
+  <span class="string">"timeout"</span>: <span class="number">300000</span>, <span class="comment">// 5分钟</span>
+  <span class="string">"on_timeout"</span>: <span class="string">"retry_once"</span> <span class="comment">// 可选: fail, retry_once, notify</span>
+}</pre>
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin: 1.5rem 0 1rem;">场景 3: Git 工作树冲突</h4>
+                        <p>当多个代理同时修改相同文件时:</p>
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="terminal-title">Terminal — Conflict Resolution</span>
+                            </div>
+                            <div class="terminal-body">
+                                <div class="terminal-line">
+                                    <span class="terminal-error">⚠ Conflict detected in src/auth.ts</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">  Agent 1 (claude): Modified lines 42-58</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">  Agent 2 (gemini): Modified lines 50-65</span>
+                                </div>
+                                <div class="terminal-line">
+                                    <span class="terminal-output">→ Actions: [M]erge manual | [K]eep first | [R]erun second</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tab -->
+                    <div class="tab-panel" id="panel-advanced" role="tabpanel">
+                        <div class="example-meta">
+                            <div class="meta-item">
+                                <strong>场景</strong>
+                                远程服务器部署 + SSH 访问 + MCP 配置
+                            </div>
+                            <div class="meta-item">
+                                <strong>前提</strong>
+                                有可 SSH 访问的远程服务器，已配置 VSCode Remote-SSH
+                            </div>
+                            <div class="meta-item">
+                                <strong>预期结果</strong>
+                                本地浏览器访问远程 Vibe Kanban，可在远程编辑器打开文件
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">远程部署步骤</h4>
+                        <ol class="steps-list">
+                            <li>
+                                <strong>在远程服务器启动 Vibe Kanban</strong>
+                                <span class="step-why">WHY: 利用远程服务器的计算资源和 GPU</span>
+                            </li>
+                            <li>
+                                <strong>使用 Tunnel 暴露 Web UI</strong>
+                                <span class="step-why">WHY: 安全地将内网服务暴露给本地浏览器</span>
+                            </li>
+                            <li>
+                                <strong>配置 SSH 远程编辑器集成</strong>
+                                <span class="step-why">WHY: 让 "Open in Editor" 功能直接打开远程 VSCode</span>
+                            </li>
+                        </ol>
+
+                        <div class="code-block" style="margin: 1.5rem 0;">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="code-filename">remote-setup.sh</span>
+                                <button class="copy-btn">复制</button>
+                            </div>
+                            <div class="code-content">
+<pre><span class="comment"># 1. 在远程服务器 (SSH 进入后执行)</span>
+<span class="variable">HOST</span>=<span class="string">"0.0.0.0"</span> npx vibe-kanban
+
+<span class="comment"># 2. 设置 Cloudflare Tunnel (另一个终端)</span>
+cloudflared tunnel --url http://localhost:3000
+
+<span class="comment"># 输出类似: https://random-name.trycloudflare.com</span>
+
+<span class="comment"># 3. 在 Vibe Kanban Settings 中配置:</span>
+<span class="comment">#    - Remote SSH Host: your-server.com</span>
+<span class="comment">#    - SSH User: ubuntu (可选)</span>
+<span class="comment">#    - Editor: vscode-remote</span></pre>
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin: 1.5rem 0 1rem;">MCP 集中配置</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="code-filename">mcp-config.json</span>
+                                <button class="copy-btn">复制</button>
+                            </div>
+                            <div class="code-content">
+<pre>{
+  <span class="string">"mcpServers"</span>: {
+    <span class="string">"filesystem"</span>: {
+      <span class="string">"command"</span>: <span class="string">"npx"</span>,
+      <span class="string">"args"</span>: [<span class="string">"-y"</span>, <span class="string">"@anthropic/mcp-server-filesystem"</span>, <span class="string">"/workspace"</span>]
+    },
+    <span class="string">"github"</span>: {
+      <span class="string">"command"</span>: <span class="string">"npx"</span>,
+      <span class="string">"args"</span>: [<span class="string">"-y"</span>, <span class="string">"@anthropic/mcp-server-github"</span>],
+      <span class="string">"env"</span>: {
+        <span class="string">"GITHUB_TOKEN"</span>: <span class="string">"${GITHUB_TOKEN}"</span>
+      }
+    }
+  }
+}</pre>
+                            </div>
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary);">
+                            <strong>注意:</strong> MCP 配置一次设置后，所有代理共享。无需在每个代理中重复配置。
+                        </p>
+                    </div>
+
+                    <!-- Error Handling Tab -->
+                    <div class="tab-panel" id="panel-error" role="tabpanel">
+                        <div class="example-meta">
+                            <div class="meta-item">
+                                <strong>场景</strong>
+                                任务失败后的诊断与恢复策略
+                            </div>
+                            <div class="meta-item">
+                                <strong>前提</strong>
+                                任务执行失败，需要排查原因
+                            </div>
+                            <div class="meta-item">
+                                <strong>预期结果</strong>
+                                识别失败原因，成功重试或降级处理
+                            </div>
+                        </div>
+
+                        <h4 style="font-family: var(--font-heading); margin-bottom: 1rem;">常见错误与恢复</h4>
+
+                        <details style="margin-bottom: 1rem;">
+                            <summary><code class="error-code">ECONNREFUSED</code> 代理连接失败</summary>
+                            <div class="content">
+                                <p><strong>原因:</strong> 代理进程未运行或端口被占用</p>
+                                <p><strong>恢复:</strong></p>
+                                <div class="terminal">
+                                    <div class="terminal-body">
+                                        <div class="terminal-line">
+                                            <span class="terminal-prompt">$ </span>
+                                            <span class="terminal-command">lsof -i :3001</span>
+                                            <span class="terminal-output"> # 检查端口占用</span>
+                                        </div>
+                                        <div class="terminal-line">
+                                            <span class="terminal-prompt">$ </span>
+                                            <span class="terminal-command">pkill -f "claude"</span>
+                                            <span class="terminal-output"> # 强制终止残留进程</span>
+                                        </div>
+                                        <div class="terminal-line">
+                                            <span class="terminal-prompt">$ </span>
+                                            <span class="terminal-command">npx vibe-kanban</span>
+                                            <span class="terminal-output"> # 重新启动</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem;">
+                            <summary><code class="error-code">RATE_LIMIT_EXCEEDED</code> API 限流</summary>
+                            <div class="content">
+                                <p><strong>原因:</strong> AI 代理 API 调用超出配额</p>
+                                <p><strong>恢复策略:</strong></p>
+                                <ul style="margin-left: 1.5rem;">
+                                    <li>自动退避: Vibe Kanban 会指数退避重试</li>
+                                    <li>任务分流: 将任务分配给未限流的代理</li>
+                                    <li>等待重置: 查看 API 配额重置时间</li>
+                                </ul>
+                            </div>
+                        </details>
+
+                        <details style="margin-bottom: 1rem;">
+                            <summary><code class="error-code">WORKTREE_LOCKED</code> Git 工作树锁定</summary>
+                            <div class="content">
+                                <p><strong>原因:</strong> 之前的操作未正常结束，留下锁文件</p>
+                                <p><strong>恢复:</strong></p>
+                                <div class="terminal">
+                                    <div class="terminal-body">
+                                        <div class="terminal-line">
+                                            <span class="terminal-prompt">$ </span>
+                                            <span class="terminal-command">rm -f .git/worktrees/*/locked</span>
+                                        </div>
+                                        <div class="terminal-line">
+                                            <span class="terminal-prompt">$ </span>
+                                            <span class="terminal-command">git worktree prune</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 0.5rem;">或设置环境变量跳过清理: <code>DISABLE_WORKTREE_ORPHAN_CLEANUP=1</code></p>
+                            </div>
+                        </details>
+
+                        <h4 style="font-family: var(--font-heading); margin: 1.5rem 0 1rem;">失败注入测试</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span class="code-filename">test-resilience.sh</span>
+                                <button class="copy-btn">复制</button>
+                            </div>
+                            <div class="code-content">
+<pre><span class="comment"># 模拟网络故障</span>
+<span class="variable">SIMULATE_NETWORK_FAILURE</span>=<span class="number">1</span> npx vibe-kanban
+
+<span class="comment"># 模拟代理崩溃</span>
+<span class="variable">SIMULATE_AGENT_CRASH</span>=<span class="string">"claude"</span> npx vibe-kanban
+
+<span class="comment"># 验证恢复行为</span>
+<span class="comment"># 预期: 自动重试 → 降级到其他代理 → 通知用户</span></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vocabulary -->
+        <section id="vocabulary">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="08">术语词汇表 <a href="#vocabulary" class="anchor-link">#</a></h2>
+                </div>
+                <div class="vocab-grid">
+                    <div class="vocab-card">
+                        <div class="vocab-term">Orchestration</div>
+                        <div class="vocab-def">编排。协调多个组件或服务协同工作的过程，类似于交响乐指挥。</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">Kanban</div>
+                        <div class="vocab-def">看板。源自日语，一种可视化工作流管理方法，通过卡片追踪任务状态。</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">MCP</div>
+                        <div class="vocab-def">Model Context Protocol。Anthropic 提出的标准协议，让 AI 模型与外部工具交互。</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">Worktree</div>
+                        <div class="vocab-def">Git 工作树。允许同一仓库同时检出多个分支到不同目录，便于并行开发。</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">Agent</div>
+                        <div class="vocab-def">代理。这里特指能够自主执行编码任务的 AI 助手，如 Claude Code。</div>
+                    </div>
+                    <div class="vocab-card">
+                        <div class="vocab-term">WebSocket</div>
+                        <div class="vocab-def">双向通信协议。允许服务器主动推送数据，实现实时状态更新。</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section id="troubleshooting">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="09">故障排除 <a href="#troubleshooting" class="anchor-link">#</a></h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="trouble-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">症状 / 错误</th>
+                                <th style="width: 30%;">原因</th>
+                                <th style="width: 40%;">解决方案</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="error-code">No agents detected</code></td>
+                                <td>未安装或未认证任何 AI 代理</td>
+                                <td>运行 <code>claude login</code> 或 <code>gemini auth login</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="error-code">Port already in use</code></td>
+                                <td>3000 端口被其他进程占用</td>
+                                <td>使用 <code>PORT=8080 npx vibe-kanban</code> 指定其他端口</td>
+                            </tr>
+                            <tr>
+                                <td><code class="error-code">SQLITE_BUSY</code></td>
+                                <td>数据库被其他 Vibe Kanban 实例锁定</td>
+                                <td>关闭其他实例，或删除 <code>~/.vibe-kanban/db.sqlite-lock</code></td>
+                            </tr>
+                            <tr>
+                                <td>UI 加载空白</td>
+                                <td>前端资源未正确构建</td>
+                                <td>清除缓存: <code>npx vibe-kanban --clear-cache</code></td>
+                            </tr>
+                            <tr>
+                                <td>远程编辑器不打开</td>
+                                <td>SSH 配置不正确或 VSCode Remote-SSH 未安装</td>
+                                <td>检查 Settings → Editor Integration 配置，确保 SSH 密钥免密登录</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cheat Sheet -->
+        <section id="cheatsheet">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="10">速查表 <a href="#cheatsheet" class="anchor-link">#</a></h2>
+                </div>
+                <div class="cheat-grid">
+                    <div class="cheat-card">
+                        <h4>🚀 启动命令</h4>
+                        <div class="cheat-content">
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">npx vibe-kanban</span>
+                                <span class="cheat-desc">快速启动</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">PORT=8080 npx vibe-kanban</span>
+                                <span class="cheat-desc">指定端口</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">HOST=0.0.0.0 npx vibe-kanban</span>
+                                <span class="cheat-desc">远程访问</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cheat-card">
+                        <h4>🔧 环境变量</h4>
+                        <div class="cheat-content">
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">FRONTEND_PORT</span>
+                                <span class="cheat-desc">前端端口 (默认 3000)</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">BACKEND_PORT</span>
+                                <span class="cheat-desc">后端端口 (默认 auto)</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">POSTHOG_API_KEY</span>
+                                <span class="cheat-desc">分析 API 密钥</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cheat-card">
+                        <h4>🔐 代理认证</h4>
+                        <div class="cheat-content">
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">claude login</span>
+                                <span class="cheat-desc">Claude Code</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">gemini auth login</span>
+                                <span class="cheat-desc">Gemini CLI</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">codex auth</span>
+                                <span class="cheat-desc">Codex CLI</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cheat-card">
+                        <h4>🛠️ 开发命令</h4>
+                        <div class="cheat-content">
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">pnpm run dev</span>
+                                <span class="cheat-desc">开发模式</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">pnpm build</span>
+                                <span class="cheat-desc">构建前端</span>
+                            </div>
+                            <div class="cheat-item">
+                                <span class="cheat-cmd">cargo watch -x run</span>
+                                <span class="cheat-desc">后端热重载</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assessment -->
+        <section id="assessment">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="11">自测评估 <a href="#assessment" class="anchor-link">#</a></h2>
+                </div>
+
+                <div class="quiz-container">
+                    <div class="quiz-question">
+                        <span class="quiz-number">1</span>
+                        <span>Vibe Kanban 的主要用途是什么？</span>
+                    </div>
+                    <ul class="quiz-options" data-quiz="q1" data-answer="b">
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1a" value="a">
+                            <label for="q1a">
+                                <span class="radio"></span>
+                                替代 Claude Code 成为新的 AI 代理
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1b" value="b">
+                            <label for="q1b">
+                                <span class="radio"></span>
+                                编排和管理多个 AI 编码代理
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q1" id="q1c" value="c">
+                            <label for="q1c">
+                                <span class="radio"></span>
+                                提供看板项目管理功能
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="quiz-explanation">
+                        正确！Vibe Kanban 是一个任务编排平台，用于管理 Claude Code、Gemini CLI、Codex 等多个 AI 代理的协同工作。
+                    </div>
+                </div>
+
+                <div class="quiz-container">
+                    <div class="quiz-question">
+                        <span class="quiz-number">2</span>
+                        <span>启动 Vibe Kanban 最快的方式是？</span>
+                    </div>
+                    <ul class="quiz-options" data-quiz="q2" data-answer="a">
+                        <li class="quiz-option">
+                            <input type="radio" name="q2" id="q2a" value="a">
+                            <label for="q2a">
+                                <span class="radio"></span>
+                                npx vibe-kanban
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q2" id="q2b" value="b">
+                            <label for="q2b">
+                                <span class="radio"></span>
+                                npm install -g vibe-kanban && vibe-kanban
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q2" id="q2c" value="c">
+                            <label for="q2c">
+                                <span class="radio"></span>
+                                docker run vibe-kanban
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="quiz-explanation">
+                        正确！npx vibe-kanban 无需全局安装，自动下载最新版本并启动。
+                    </div>
+                </div>
+
+                <div class="quiz-container">
+                    <div class="quiz-question">
+                        <span class="quiz-number">3</span>
+                        <span>MCP (Model Context Protocol) 在 Vibe Kanban 中的作用是？</span>
+                    </div>
+                    <ul class="quiz-options" data-quiz="q3" data-answer="c">
+                        <li class="quiz-option">
+                            <input type="radio" name="q3" id="q3a" value="a">
+                            <label for="q3a">
+                                <span class="radio"></span>
+                                加密代理之间的通信
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q3" id="q3b" value="b">
+                            <label for="q3b">
+                                <span class="radio"></span>
+                                管理用户身份验证
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q3" id="q3c" value="c">
+                            <label for="q3c">
+                                <span class="radio"></span>
+                                集中配置 AI 代理与外部工具的交互
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="quiz-explanation">
+                        正确！MCP 是模型上下文协议，Vibe Kanban 允许集中管理 MCP 配置，所有代理共享。
+                    </div>
+                </div>
+
+                <div class="quiz-container">
+                    <div class="quiz-question">
+                        <span class="quiz-number">4</span>
+                        <span>如何让 Vibe Kanban 支持远程 VSCode 打开文件？</span>
+                    </div>
+                    <ul class="quiz-options" data-quiz="q4" data-answer="b">
+                        <li class="quiz-option">
+                            <input type="radio" name="q4" id="q4a" value="a">
+                            <label for="q4a">
+                                <span class="radio"></span>
+                                安装 VSCode 插件即可
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q4" id="q4b" value="b">
+                            <label for="q4b">
+                                <span class="radio"></span>
+                                配置 SSH Host 和免密登录
+                            </label>
+                        </li>
+                        <li class="quiz-option">
+                            <input type="radio" name="q4" id="q4c" value="c">
+                            <label for="q4c">
+                                <span class="radio"></span>
+                                使用 FTP 上传代码
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="quiz-explanation">
+                        正确！需要在 Settings → Editor Integration 中配置 Remote SSH Host，并确保 SSH 密钥免密登录。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Steps -->
+        <section id="actions">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-number="12">行动步骤 <a href="#actions" class="anchor-link">#</a></h2>
+                </div>
+                <div class="action-grid">
+                    <div class="action-card">
+                        <h4>🚀 快速开始</h4>
+                        <ul>
+                            <li>安装 Node.js v18 或更高版本</li>
+                            <li>运行 <code>claude login</code> 完成认证</li>
+                            <li>执行 <code>npx vibe-kanban</code></li>
+                            <li>打开 http://localhost:3000</li>
+                            <li>创建第一个任务并分配给代理</li>
+                        </ul>
+                    </div>
+                    <div class="action-card">
+                        <h4>📚 进一步阅读</h4>
+                        <ul>
+                            <li><a href="https://vibekanban.com" target="_blank">官方文档 ↗</a></li>
+                            <li><a href="https://github.com/BloopAI/vibe-kanban/discussions" target="_blank">GitHub Discussions ↗</a></li>
+                            <li><a href="https://modelcontextprotocol.io" target="_blank">MCP 协议规范 ↗</a></li>
+                        </ul>
+                    </div>
+                    <div class="action-card">
+                        <h4>🔗 相关项目</h4>
+                        <ul>
+                            <li><a href="https://github.com/anthropics/claude-code" target="_blank">Claude Code ↗</a></li>
+                            <li><a href="https://github.com/google/gemini-cli" target="_blank">Gemini CLI ↗</a></li>
+                            <li><a href="https://github.com/openai/codex" target="_blank">Codex CLI ↗</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="page-footer">
+            <div class="container">
+                <div class="footer-meta">
+                    <div class="footer-item">
+                        <strong>来源</strong>
+                        <a href="https://github.com/BloopAI/vibe-kanban" target="_blank">github.com/BloopAI/vibe-kanban ↗</a>
+                    </div>
+                    <div class="footer-item">
+                        <strong>生成日期</strong>
+                        2026-01-04
+                    </div>
+                    <div class="footer-item">
+                        <strong>维护者</strong>
+                        BloopAI Team
+                    </div>
+                    <div class="footer-item">
+                        <strong>许可证</strong>
+                        Apache-2.0
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Floating Back to Top -->
+    <button class="floating-top" aria-label="返回顶部">↑</button>
+
+    <!-- Toast -->
+    <div class="toast" role="alert" aria-live="polite">已复制到剪贴板！</div>
+
+    <script>
+        // Sidebar Toggle (Mobile)
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+
+        menuToggle.addEventListener('click', () => {
+            const isOpen = sidebar.classList.toggle('open');
+            menuToggle.classList.toggle('active');
+            menuToggle.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Close sidebar when clicking a link (mobile)
+        sidebar.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.remove('open');
+                    menuToggle.classList.remove('active');
+                }
+            });
+        });
+
+        // Scrollspy & Progress Bar
+        const sections = document.querySelectorAll('section[id], header[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const progressBar = document.querySelector('.progress-bar');
+
+        const observerOptions = {
+            rootMargin: '-20% 0px -80% 0px',
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${entry.target.id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => observer.observe(section));
+
+        // Progress Bar
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', Math.round(progress));
+        });
+
+        // Back to Top
+        const floatingTop = document.querySelector('.floating-top');
+        const backToTop = document.querySelector('.back-to-top');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                floatingTop.classList.add('visible');
+            } else {
+                floatingTop.classList.remove('visible');
+            }
+        });
+
+        [floatingTop, backToTop].forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // Tabs
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+
+                tabBtns.forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+
+                tabPanels.forEach(panel => {
+                    panel.classList.remove('active');
+                    if (panel.id === `panel-${tabId}`) {
+                        panel.classList.add('active');
+                    }
+                });
+            });
+
+            // Keyboard navigation
+            btn.addEventListener('keydown', (e) => {
+                const tabs = Array.from(tabBtns);
+                const index = tabs.indexOf(btn);
+
+                if (e.key === 'ArrowRight') {
+                    const next = tabs[(index + 1) % tabs.length];
+                    next.focus();
+                    next.click();
+                } else if (e.key === 'ArrowLeft') {
+                    const prev = tabs[(index - 1 + tabs.length) % tabs.length];
+                    prev.focus();
+                    prev.click();
+                }
+            });
+        });
+
+        // Quiz
+        const quizOptions = document.querySelectorAll('.quiz-options');
+
+        quizOptions.forEach(quiz => {
+            const answer = quiz.dataset.answer;
+            const explanation = quiz.nextElementSibling;
+            const options = quiz.querySelectorAll('.quiz-option');
+
+            options.forEach(option => {
+                const input = option.querySelector('input');
+
+                input.addEventListener('change', () => {
+                    options.forEach(o => {
+                        o.classList.remove('correct', 'incorrect');
+                    });
+
+                    if (input.value === answer) {
+                        option.classList.add('correct');
+                    } else {
+                        option.classList.add('incorrect');
+                        options.forEach(o => {
+                            if (o.querySelector('input').value === answer) {
+                                o.classList.add('correct');
+                            }
+                        });
+                    }
+
+                    explanation.classList.add('show');
+                });
+            });
+        });
+
+        // Copy to Clipboard
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        const toast = document.querySelector('.toast');
+
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const codeBlock = btn.closest('.code-block');
+                const code = codeBlock.querySelector('pre').textContent;
+
+                navigator.clipboard.writeText(code).then(() => {
+                    toast.classList.add('show');
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 2000);
+                });
+            });
+        });
+
+        // Mode Toggle
+        const modeBasic = document.getElementById('mode-basic');
+        const modeFull = document.getElementById('mode-full');
+
+        modeBasic.addEventListener('change', () => {
+            document.body.classList.remove('full-mode');
+        });
+
+        modeFull.addEventListener('change', () => {
+            document.body.classList.add('full-mode');
+        });
+
+        // Checkpoint Quiz (inline)
+        document.querySelectorAll('[name="checkpoint1"]').forEach(input => {
+            input.addEventListener('change', () => {
+                const options = document.querySelectorAll('[name="checkpoint1"]');
+                const container = input.closest('.quiz-container');
+                const explanation = container.querySelector('.quiz-explanation');
+
+                options.forEach(opt => {
+                    const li = opt.closest('.quiz-option');
+                    li.classList.remove('correct', 'incorrect');
+                });
+
+                const selectedLi = input.closest('.quiz-option');
+                if (input.value === 'b') {
+                    selectedLi.classList.add('correct');
+                } else {
+                    selectedLi.classList.add('incorrect');
+                    document.querySelector('[data-correct="true"]').classList.add('correct');
+                }
+
+                explanation.classList.add('show');
+            });
+        });
+
+        // Smooth anchor scroll offset
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                const href = anchor.getAttribute('href');
+                if (href === '#') return;
+
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    const offset = 20;
+                    const targetPosition = target.getBoundingClientRect().top + window.scrollY - offset;
+                    window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

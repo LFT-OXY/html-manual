@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serena - AI 编码代理工具包完全指南</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #fafbfc;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --accent-cyan: #0891b2;
+            --accent-magenta: #db2777;
+            --accent-yellow: #f59e0b;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: rgba(8, 145, 178, 0.2);
+            --code-bg: rgba(241, 245, 249, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* 背景动态网格 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(8, 145, 178, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(8, 145, 178, 0.06) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* 光晕效果 */
+        .glow-orb {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glow-orb-1 {
+            background: var(--accent-cyan);
+            top: -200px;
+            left: -200px;
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .glow-orb-2 {
+            background: var(--accent-magenta);
+            bottom: -200px;
+            right: -200px;
+            animation: float 20s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(100px, 100px) scale(1.2); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 4rem 0;
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta), var(--accent-yellow));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 5s ease infinite, titleEntry 1s ease-out;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes titleEntry {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: fadeIn 1s ease-out 0.3s backwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-description {
+            max-width: 800px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            animation: fadeIn 1s ease-out 0.6s backwards;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            margin: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 1s ease-out 0.9s backwards;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .tech-badge:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(8, 145, 178, 0.2);
+            background: rgba(8, 145, 178, 0.08);
+        }
+
+        /* Section */
+        section {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.05), rgba(219, 39, 119, 0.05));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 32px rgba(8, 145, 178, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        .card-content {
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .code-block code {
+            color: var(--accent-cyan);
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .arch-layer {
+            background: rgba(241, 245, 249, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .arch-layer:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(10px);
+            box-shadow: -5px 0 20px rgba(8, 145, 178, 0.12);
+        }
+
+        .arch-layer-title {
+            font-family: 'Orbitron', monospace;
+            color: var(--accent-yellow);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Step-by-step Guide */
+        .steps {
+            margin: 3rem 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 2rem;
+            margin: 3rem 0;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 2rem;
+            top: 5rem;
+            bottom: -3rem;
+            width: 2px;
+            background: linear-gradient(180deg, var(--accent-cyan), transparent);
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 4rem;
+            height: 4rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 5px 20px rgba(8, 145, 178, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-content {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .step-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+        }
+
+        /* Language Grid */
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .lang-item {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .lang-item:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(8, 145, 178, 0.08);
+            transform: scale(1.05);
+        }
+
+        /* Comparison Table */
+        .comparison {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .comparison table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison th,
+        .comparison td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(8, 145, 178, 0.1);
+        }
+
+        .comparison th {
+            font-family: 'Orbitron', monospace;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .comparison tr:hover {
+            background: rgba(8, 145, 178, 0.04);
+        }
+
+        /* Feature Highlight */
+        .feature-highlight {
+            background: linear-gradient(135deg, rgba(8, 145, 178, 0.08), rgba(219, 39, 119, 0.08));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .feature-highlight::before {
+            content: '✦';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 3rem;
+            color: var(--accent-yellow);
+            opacity: 0.2;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-magenta);
+            text-shadow: 0 0 10px var(--accent-magenta);
+        }
+
+        /* Scroll Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .step:not(:last-child)::after {
+                left: 2rem;
+                top: 5rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">SERENA</h1>
+            <p class="hero-subtitle">AI 编码代理工具包</p>
+            <p class="hero-description">
+                一个强大的开源编码代理工具包，通过语义检索和编辑能力，将 LLM 转化为能够直接操作代码库的完整功能代理。
+                支持 30+ 种编程语言，基于语言服务器协议（LSP）提供 IDE 级别的代码智能。
+            </p>
+            <div>
+                <span class="tech-badge">🚀 开源 MIT</span>
+                <span class="tech-badge">🔧 30+ 语言</span>
+                <span class="tech-badge">⚡ LSP 驱动</span>
+                <span class="tech-badge">🤖 AI 就绪</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- What is Serena -->
+    <section class="container fade-in">
+        <h2 class="section-title">什么是 Serena？</h2>
+        <p class="section-subtitle">理解这个革命性的编码代理工具包</p>
+
+        <div class="feature-highlight">
+            <h3 style="font-family: 'Orbitron', monospace; color: var(--accent-yellow); margin-bottom: 1rem;">核心理念</h3>
+            <p>
+                Serena 不是一个特定的 AI 模型或 IDE 插件，而是一个<strong>工具包框架</strong>。
+                它为大语言模型（LLM）提供了一套强大的工具，使其能够像人类开发者使用 IDE 一样，
+                以<strong>语义级别</strong>理解和操作代码，而不仅仅是将代码视为文本字符串。
+            </p>
+        </div>
+
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-icon">🎯</span>
+                <h3 class="card-title">精确的符号级操作</h3>
+                <p class="card-content">
+                    不再需要阅读整个文件或进行字符串搜索。Serena 提供 <code>find_symbol</code>、
+                    <code>find_referencing_symbols</code>、<code>insert_after_symbol</code> 等工具，
+                    让 AI 能够精确定位和修改代码符号。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🌐</span>
+                <h3 class="card-title">广泛的语言支持</h3>
+                <p class="card-content">
+                    通过 LSP（语言服务器协议）集成，支持 Python、JavaScript、TypeScript、Rust、Go、
+                    Java、C++、C# 等超过 30 种编程语言，适用于几乎任何项目。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🔌</span>
+                <h3 class="card-title">框架无关</h3>
+                <p class="card-content">
+                    不绑定特定的 LLM、框架或接口。支持 MCP（Model Context Protocol）、OpenAPI、
+                    以及自定义集成，可以与 Claude、ChatGPT、VSCode、Cursor 等多种工具配合使用。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">⚙️</span>
+                <h3 class="card-title">基于 LSP 技术</h3>
+                <p class="card-content">
+                    构建在成熟的语言服务器协议之上，复用现有的语言服务器基础设施，
+                    提供可靠的代码分析、导航和重构能力。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">📊</span>
+                <h3 class="card-title">适合大型项目</h3>
+                <p class="card-content">
+                    在复杂代码库中发挥最大价值。通过利用代码的关系结构，
+                    即使在包含数千个文件的项目中也能高效工作，显著提升生产力。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🛠️</span>
+                <h3 class="card-title">可扩展架构</h3>
+                <p class="card-content">
+                    开发者可以通过继承 <code>serena.agent.Tool</code> 类添加自定义功能，
+                    工具会自动集成到 SerenaAgent 中，轻松扩展能力。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="container fade-in">
+        <h2 class="section-title">实现原理</h2>
+        <p class="section-subtitle">深入理解 Serena 的技术架构</p>
+
+        <div class="architecture">
+            <h3 style="font-family: 'Orbitron', monospace; color: var(--accent-cyan); margin-bottom: 2rem; font-size: 1.5rem;">
+                技术栈架构
+            </h3>
+
+            <div class="arch-layer">
+                <div class="arch-layer-title">🔝 应用层 - 客户端接口</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    Claude Desktop、Claude Code、VSCode、Cursor、ChatGPT 等 AI 编程助手
+                </p>
+            </div>
+
+            <div class="arch-layer">
+                <div class="arch-layer-title">📡 协议层 - 通信协议</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    <strong>MCP (Model Context Protocol)</strong>: 用于 Claude 系列工具<br>
+                    <strong>OpenAPI</strong>: 通过 mcpo 适配器支持非 MCP 客户端<br>
+                    <strong>自定义协议</strong>: 可集成到任何 AI 框架
+                </p>
+            </div>
+
+            <div class="arch-layer">
+                <div class="arch-layer-title">🧠 核心层 - Serena 工具包</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    <strong>SerenaAgent</strong>: 主要代理类，管理工具和会话<br>
+                    <strong>工具集</strong>: find_symbol、find_referencing_symbols、insert_after_symbol 等<br>
+                    <strong>Python MCP SDK</strong>: MCP 协议实现
+                </p>
+            </div>
+
+            <div class="arch-layer">
+                <div class="arch-layer-title">🔧 抽象层 - LSP 适配</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    <strong>Solid-LSP</strong>: 对 multilspy 的扩展<br>
+                    <strong>Multilspy</strong>: 多语言 LSP 客户端库
+                </p>
+            </div>
+
+            <div class="arch-layer">
+                <div class="arch-layer-title">⚙️ 基础层 - 语言服务器</div>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    Pyright (Python)、TypeScript Language Server、rust-analyzer、
+                    gopls (Go)、Java Language Server、clangd (C/C++) 等 30+ 语言服务器
+                </p>
+            </div>
+        </div>
+
+        <div style="margin-top: 3rem;">
+            <h3 style="font-family: 'Orbitron', monospace; color: var(--accent-magenta); margin-bottom: 1.5rem; font-size: 1.4rem;">
+                工作流程说明
+            </h3>
+
+            <div class="code-block" data-lang="workflow">
+<pre>1. AI 客户端发送请求
+   ↓
+2. 通过 MCP/OpenAPI 协议传递到 Serena
+   ↓
+3. SerenaAgent 选择合适的工具（如 find_symbol）
+   ↓
+4. 工具通过 Solid-LSP 与对应的语言服务器通信
+   ↓
+5. 语言服务器分析代码库，返回语义信息
+   ↓
+6. Serena 格式化结果并返回给 AI
+   ↓
+7. AI 理解代码结构，执行精确操作</pre>
+            </div>
+
+            <div class="feature-highlight">
+                <h4 style="color: var(--accent-yellow); margin-bottom: 0.5rem;">为什么使用 LSP？</h4>
+                <p>
+                    LSP（Language Server Protocol）是微软开发的一个开放协议，最初用于 VSCode。
+                    它将语言特定的功能（如代码补全、跳转定义、查找引用等）与编辑器分离。
+                    Serena 利用这一成熟技术栈，无需为每种语言重新实现分析器，就能提供强大的代码理解能力。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Supported Languages -->
+    <section class="container fade-in">
+        <h2 class="section-title">支持的编程语言</h2>
+        <p class="section-subtitle">覆盖主流和小众语言的广泛支持</p>
+
+        <div class="lang-grid">
+            <div class="lang-item">🐍 Python</div>
+            <div class="lang-item">📜 JavaScript</div>
+            <div class="lang-item">🔷 TypeScript</div>
+            <div class="lang-item">🦀 Rust</div>
+            <div class="lang-item">🐹 Go</div>
+            <div class="lang-item">☕ Java</div>
+            <div class="lang-item">➕ C++</div>
+            <div class="lang-item">©️ C</div>
+            <div class="lang-item">💎 Ruby</div>
+            <div class="lang-item">🔷 C#</div>
+            <div class="lang-item">🐘 PHP</div>
+            <div class="lang-item">⚡ Kotlin</div>
+            <div class="lang-item">🍃 Swift</div>
+            <div class="lang-item">🎯 Dart</div>
+            <div class="lang-item">📊 Scala</div>
+            <div class="lang-item">🔮 Elixir</div>
+            <div class="lang-item">🎭 Erlang</div>
+            <div class="lang-item">🦘 Haskell</div>
+            <div class="lang-item">🐪 OCaml</div>
+            <div class="lang-item">🔧 Lua</div>
+            <div class="lang-item">🎨 CSS</div>
+            <div class="lang-item">📝 HTML</div>
+            <div class="lang-item">📄 JSON</div>
+            <div class="lang-item">🗃️ SQL</div>
+            <div class="lang-item">🐚 Shell</div>
+            <div class="lang-item">🔨 Makefile</div>
+            <div class="lang-item">⚙️ YAML</div>
+            <div class="lang-item">📋 TOML</div>
+            <div class="lang-item">🔗 GraphQL</div>
+            <div class="lang-item">...更多</div>
+        </div>
+
+        <p style="text-align: center; margin-top: 2rem; color: var(--text-secondary);">
+            只要有对应的 LSP 语言服务器，Serena 就能支持该语言
+        </p>
+    </section>
+
+    <!-- Integration Methods -->
+    <section class="container fade-in">
+        <h2 class="section-title">集成方式</h2>
+        <p class="section-subtitle">灵活的集成选项适配不同需求</p>
+
+        <div class="comparison">
+            <table>
+                <thead>
+                    <tr>
+                        <th>集成方式</th>
+                        <th>适用场景</th>
+                        <th>支持的工具</th>
+                        <th>设置难度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong style="color: var(--accent-cyan);">MCP 协议</strong></td>
+                        <td>原生支持 MCP 的客户端</td>
+                        <td>Claude Code、Claude Desktop、VSCode、Cursor、Codex</td>
+                        <td>⭐⭐ 简单</td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color: var(--accent-cyan);">OpenAPI（通过 mcpo）</strong></td>
+                        <td>不支持 MCP 的工具</td>
+                        <td>ChatGPT、自定义 GPT、其他 OpenAPI 兼容客户端</td>
+                        <td>⭐⭐⭐ 中等</td>
+                    </tr>
+                    <tr>
+                        <td><strong style="color: var(--accent-cyan);">自定义框架</strong></td>
+                        <td>深度集成到自己的 AI 系统</td>
+                        <td>任何自定义 AI 代理框架</td>
+                        <td>⭐⭐⭐⭐ 需要开发</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Complete Tutorial -->
+    <section class="container fade-in">
+        <h2 class="section-title">完整操作示例</h2>
+        <p class="section-subtitle">从零开始：在 Claude Code 中使用 Serena</p>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3 class="step-title">安装前置条件</h3>
+                    <p style="margin-bottom: 1rem;">首先需要安装 uv，这是一个快速的 Python 包管理器</p>
+                    <div class="code-block" data-lang="bash">
+<pre># macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 验证安装
+uv --version</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3 class="step-title">配置 Claude Code</h3>
+                    <p style="margin-bottom: 1rem;">在 Claude Code 设置中添加 Serena MCP 服务器</p>
+                    <div class="code-block" data-lang="json">
+<pre># 编辑 ~/.claude/settings.json 或通过 Claude Code 设置界面
+{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server"
+      ]
+    }
+  }
+}</pre>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">
+                        💡 提示：也可以添加额外参数如 <code>--debug</code> 来启用调试模式
+                    </p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3 class="step-title">重启 Claude Code</h3>
+                    <p>关闭并重新打开 Claude Code，让配置生效。Serena 服务器将自动启动并连接。</p>
+                    <p style="margin-top: 1rem; color: var(--accent-cyan);">
+                        ✓ 在 Claude Code 的工具列表中应该能看到 Serena 提供的工具
+                    </p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3 class="step-title">打开项目并初始化</h3>
+                    <p style="margin-bottom: 1rem;">在 Claude Code 中打开一个代码项目，Serena 会自动检测项目类型并启动对应的语言服务器</p>
+                    <div class="code-block" data-lang="bash">
+<pre># 在终端中进入项目目录
+cd ~/projects/my-awesome-app
+
+# 启动 Claude Code
+claude-code .</pre>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">
+                        📁 Serena 会在项目根目录创建 <code>.serena/</code> 配置目录
+                    </p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h3 class="step-title">使用 Serena 工具</h3>
+                    <p style="margin-bottom: 1rem;">现在可以向 Claude 提出代码相关的请求，它会自动使用 Serena 的工具</p>
+
+                    <div style="background: rgba(0, 240, 255, 0.05); border-left: 3px solid var(--accent-cyan); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+                        <strong style="color: var(--accent-cyan);">示例对话 1: 查找符号</strong>
+                        <p style="margin-top: 0.5rem;"><strong>你:</strong> "找到 UserService 类的定义"</p>
+                        <p><strong>Claude:</strong> 使用 <code>find_symbol(symbol_name="UserService")</code></p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                            → 返回: <code>src/services/user_service.py:15</code>
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255, 0, 170, 0.05); border-left: 3px solid var(--accent-magenta); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+                        <strong style="color: var(--accent-magenta);">示例对话 2: 查找引用</strong>
+                        <p style="margin-top: 0.5rem;"><strong>你:</strong> "哪些地方调用了 authenticate 方法？"</p>
+                        <p><strong>Claude:</strong> 使用 <code>find_referencing_symbols(symbol_name="authenticate")</code></p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                            → 返回所有调用该方法的位置列表
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255, 221, 0, 0.05); border-left: 3px solid var(--accent-yellow); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+                        <strong style="color: var(--accent-yellow);">示例对话 3: 代码修改</strong>
+                        <p style="margin-top: 0.5rem;"><strong>你:</strong> "在 process_payment 函数后添加一个新函数 refund_payment"</p>
+                        <p><strong>Claude:</strong> 使用 <code>insert_after_symbol(symbol_name="process_payment", code="...")</code></p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">
+                            → 精确在指定位置插入代码
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <h3 class="step-title">实际应用场景</h3>
+                    <p style="margin-bottom: 1rem;">让我们看一个真实的重构场景</p>
+
+                    <div class="code-block" data-lang="scenario">
+<pre><strong style="color: var(--accent-cyan);">场景：</strong>你的团队决定将所有的日志记录从 print 改为使用 logging 模块
+
+<strong style="color: var(--accent-cyan);">传统方式：</strong>
+1. 全局搜索 print(
+2. 手动检查每个结果是否是调试输出
+3. 逐个文件修改
+4. 容易遗漏或误改
+
+<strong style="color: var(--accent-yellow);">使用 Serena：</strong>
+你: "找到所有使用 print 的地方，并帮我改为使用 logging"
+
+Claude 会:
+1. 使用 find_referencing_symbols 找到所有 print 调用
+2. 分析上下文判断是否是日志输出
+3. 使用 insert_after_symbol 在文件开头添加 import logging
+4. 使用 replace_symbol_code 替换 print 为 logging.info
+5. 保持代码格式和缩进一致
+
+<strong style="color: var(--accent-magenta);">结果：</strong>
+✓ 精确定位所有相关代码
+✓ 智能判断替换上下文
+✓ 自动处理导入语句
+✓ 几分钟完成原本需要几小时的工作</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">7</div>
+                <div class="step-content">
+                    <h3 class="step-title">高级技巧</h3>
+
+                    <div style="margin-top: 1rem;">
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">💡 最佳实践</h4>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-cyan);">▹</span>
+                                在大型代码库中，先用 <code>find_symbol</code> 定位再操作，比直接搜索文件更高效
+                            </li>
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-cyan);">▹</span>
+                                使用语义工具进行重构，可以避免破坏引用关系
+                            </li>
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-cyan);">▹</span>
+                                让 AI 先用 <code>find_referencing_symbols</code> 了解影响范围再修改代码
+                            </li>
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-cyan);">▹</span>
+                                配合版本控制，可以放心让 AI 进行大规模重构
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4 style="color: var(--accent-magenta); margin-bottom: 0.5rem;">⚠️ 注意事项</h4>
+                        <ul style="list-style: none; padding-left: 0;">
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-magenta);">▹</span>
+                                首次启动时语言服务器需要索引代码库，大项目可能需要几分钟
+                            </li>
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-magenta);">▹</span>
+                                对于小型项目（少于 10 个文件），直接操作可能比使用 Serena 更快
+                            </li>
+                            <li style="margin: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                                <span style="position: absolute; left: 0; color: var(--accent-magenta);">▹</span>
+                                Serena 最擅长导航和修改现有代码，对于从零编写新功能价值较小
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="container fade-in">
+        <h2 class="section-title">典型应用场景</h2>
+        <p class="section-subtitle">Serena 在实际开发中的价值体现</p>
+
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-icon">🔍</span>
+                <h3 class="card-title">代码导航与理解</h3>
+                <p class="card-content">
+                    快速理解陌生代码库的结构。"这个类在哪里定义？"、"谁在使用这个函数？"、
+                    "这个变量的作用域是什么？" - 让 AI 帮你快速定位和理解。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">♻️</span>
+                <h3 class="card-title">大规模重构</h3>
+                <p class="card-content">
+                    重命名符号、修改函数签名、迁移 API - Serena 能够找到所有相关引用，
+                    确保重构的完整性和正确性，避免遗漏导致的运行时错误。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🐛</span>
+                <h3 class="card-title">Bug 追踪</h3>
+                <p class="card-content">
+                    追溯 bug 的影响范围。通过查找符号引用，了解问题代码在哪里被调用，
+                    帮助你评估修复的影响面和潜在风险。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">📚</span>
+                <h3 class="card-title">API 迁移</h3>
+                <p class="card-content">
+                    升级依赖库版本时，找到所有使用旧 API 的地方并批量更新。
+                    Serena 的语义理解确保不会误改相似但无关的代码。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">📖</span>
+                <h3 class="card-title">文档生成</h3>
+                <p class="card-content">
+                    让 AI 遍历代码符号，自动生成准确的 API 文档。基于实际代码结构，
+                    而不是简单的文本分析，确保文档与代码保持同步。
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🔒</span>
+                <h3 class="card-title">代码审计</h3>
+                <p class="card-content">
+                    检查代码中的模式和潜在问题。"找到所有未处理异常的数据库调用"、
+                    "哪些函数没有类型注解？" - 让 AI 进行系统性的代码检查。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="container fade-in">
+        <h2 class="section-title">与传统方法对比</h2>
+        <p class="section-subtitle">为什么 Serena 能够改变游戏规则</p>
+
+        <div class="comparison">
+            <table>
+                <thead>
+                    <tr>
+                        <th>任务</th>
+                        <th>传统 AI 编程助手</th>
+                        <th>使用 Serena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>找到函数定义</strong></td>
+                        <td>需要阅读多个文件或依赖正则搜索</td>
+                        <td>直接使用 find_symbol 精确定位</td>
+                    </tr>
+                    <tr>
+                        <td><strong>重命名变量</strong></td>
+                        <td>文本替换可能误改同名但不相关的代码</td>
+                        <td>语义级重命名，只影响相关引用</td>
+                    </tr>
+                    <tr>
+                        <td><strong>了解依赖关系</strong></td>
+                        <td>手动追踪 import 语句和调用链</td>
+                        <td>find_referencing_symbols 自动构建调用图</td>
+                    </tr>
+                    <tr>
+                        <td><strong>在大型项目中定位</strong></td>
+                        <td>需要提供完整文件或大量上下文</td>
+                        <td>基于符号索引，即时响应</td>
+                    </tr>
+                    <tr>
+                        <td><strong>跨文件重构</strong></td>
+                        <td>容易遗漏某些文件或引用</td>
+                        <td>系统性覆盖所有相关位置</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Technical Details -->
+    <section class="container fade-in">
+        <h2 class="section-title">核心工具详解</h2>
+        <p class="section-subtitle">Serena 提供的主要工具及其用法</p>
+
+        <div style="margin-top: 3rem;">
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 class="card-title">🔍 find_symbol</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    查找代码符号的定义位置（类、函数、变量等）
+                </p>
+                <div class="code-block" data-lang="python">
+<pre># 用法示例
+find_symbol(
+    symbol_name="UserService",
+    symbol_type="class"  # 可选: class, function, variable
+)</pre>
+                </div>
+                <p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.9rem;">
+                    <strong>返回：</strong> 符号定义的文件路径和行号
+                </p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 class="card-title">🔗 find_referencing_symbols</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    查找所有引用某个符号的位置
+                </p>
+                <div class="code-block" data-lang="python">
+<pre># 用法示例
+find_referencing_symbols(
+    symbol_name="authenticate",
+    file_path="src/auth/service.py",  # 可选：限定搜索范围
+    line_number=42
+)</pre>
+                </div>
+                <p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.9rem;">
+                    <strong>返回：</strong> 所有引用该符号的位置列表
+                </p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 class="card-title">📝 insert_after_symbol</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    在指定符号后插入代码
+                </p>
+                <div class="code-block" data-lang="python">
+<pre># 用法示例
+insert_after_symbol(
+    symbol_name="process_payment",
+    code="""
+def refund_payment(transaction_id: str) -> bool:
+    \"\"\"处理退款\"\"\"
+    # 实现退款逻辑
+    return True
+    """,
+    preserve_indentation=True
+)</pre>
+                </div>
+                <p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.9rem;">
+                    <strong>作用：</strong> 在语义合适的位置插入新代码，保持项目结构
+                </p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 class="card-title">✏️ replace_symbol_code</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    替换符号的实现代码
+                </p>
+                <div class="code-block" data-lang="python">
+<pre># 用法示例
+replace_symbol_code(
+    symbol_name="validate_email",
+    new_code="""
+def validate_email(email: str) -> bool:
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+    """
+)</pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">🔎 get_symbol_info</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    获取符号的详细信息（类型、签名、文档等）
+                </p>
+                <div class="code-block" data-lang="python">
+<pre># 用法示例
+get_symbol_info(
+    symbol_name="UserService.create_user"
+)
+
+# 返回示例
+{
+    "name": "create_user",
+    "type": "method",
+    "signature": "(self, username: str, email: str) -> User",
+    "docstring": "创建新用户",
+    "file": "src/services/user_service.py",
+    "line": 25
+}</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Getting Started -->
+    <section class="container fade-in">
+        <h2 class="section-title">快速开始</h2>
+        <p class="section-subtitle">三种主要集成方式的详细配置</p>
+
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-icon">🤖</span>
+                <h3 class="card-title">Claude Code / Desktop</h3>
+                <div class="code-block" data-lang="json">
+<pre>{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server"
+      ]
+    }
+  }
+}</pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">💬</span>
+                <h3 class="card-title">ChatGPT (OpenAPI)</h3>
+                <div class="code-block" data-lang="bash">
+<pre># 1. 安装 mcpo
+pip install mcpo
+
+# 2. 启动 OpenAPI 适配器
+mcpo \
+  --mcp-server uvx \
+  --from git+https://github.com/oraios/serena \
+  serena start-mcp-server
+
+# 3. 在 ChatGPT 中添加 Actions
+# 使用生成的 OpenAPI schema</pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">⚡</span>
+                <h3 class="card-title">自定义框架</h3>
+                <div class="code-block" data-lang="python">
+<pre># Python 示例
+from serena import SerenaAgent
+from serena.tools import FindSymbol
+
+# 创建代理
+agent = SerenaAgent(
+    project_path="/path/to/project"
+)
+
+# 使用工具
+result = agent.use_tool(
+    FindSymbol,
+    symbol_name="MyClass"
+)
+
+print(result)</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community -->
+    <section class="container fade-in">
+        <h2 class="section-title">社区反馈</h2>
+        <p class="section-subtitle">开发者如何评价 Serena</p>
+
+        <div class="cards-grid">
+            <div class="card">
+                <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 1rem;">
+                    "Serena 是一个真正的游戏改变者。在我们有 50+ 个微服务的代码库中，
+                    它让 AI 能够准确定位和修改代码，节省了大量时间。"
+                </p>
+                <p style="color: var(--accent-cyan); font-weight: 600;">
+                    - 资深后端工程师
+                </p>
+            </div>
+
+            <div class="card">
+                <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 1rem;">
+                    "对于大型重构任务，Serena 的语义理解能力让我放心地让 AI 进行批量修改。
+                    它知道什么该改，什么不该改。"
+                </p>
+                <p style="color: var(--accent-cyan); font-weight: 600;">
+                    - 技术架构师
+                </p>
+            </div>
+
+            <div class="card">
+                <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 1rem;">
+                    "刚开始使用时觉得配置有点复杂，但一旦运行起来，效率提升是显而易见的。
+                    现在已经离不开它了。"
+                </p>
+                <p style="color: var(--accent-cyan); font-weight: 600;">
+                    - 全栈开发者
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Limitations -->
+    <section class="container fade-in">
+        <h2 class="section-title">局限性与适用场景</h2>
+        <p class="section-subtitle">了解何时使用以及何时不使用 Serena</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem;">
+            <div class="feature-highlight" style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(0, 240, 255, 0.05));">
+                <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">✅ 最适合</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin: 0.5rem 0;">✓ 大型代码库（100+ 文件）</li>
+                    <li style="margin: 0.5rem 0;">✓ 遗留代码的维护和理解</li>
+                    <li style="margin: 0.5rem 0;">✓ 跨文件重构任务</li>
+                    <li style="margin: 0.5rem 0;">✓ API 迁移和升级</li>
+                    <li style="margin: 0.5rem 0;">✓ 代码审计和分析</li>
+                    <li style="margin: 0.5rem 0;">✓ 复杂的依赖关系追踪</li>
+                </ul>
+            </div>
+
+            <div class="feature-highlight" style="background: linear-gradient(135deg, rgba(255, 0, 170, 0.1), rgba(255, 0, 170, 0.05));">
+                <h3 style="color: var(--accent-magenta); margin-bottom: 1rem;">⚠️ 价值较小</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin: 0.5rem 0;">○ 小型项目（&lt; 10 文件）</li>
+                    <li style="margin: 0.5rem 0;">○ 从零开始的新项目</li>
+                    <li style="margin: 0.5rem 0;">○ 纯粹的代码生成任务</li>
+                    <li style="margin: 0.5rem 0;">○ 简单的文本处理</li>
+                    <li style="margin: 0.5rem 0;">○ 快速原型开发</li>
+                    <li style="margin: 0.5rem 0;">○ 单文件脚本编写</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resources -->
+    <section class="container fade-in">
+        <h2 class="section-title">相关资源</h2>
+        <p class="section-subtitle">深入学习和获取支持</p>
+
+        <div class="cards-grid">
+            <div class="card">
+                <span class="card-icon">📚</span>
+                <h3 class="card-title">官方文档</h3>
+                <p class="card-content">
+                    访问 GitHub 仓库查看完整文档、API 参考和示例代码
+                </p>
+                <a href="https://github.com/oraios/serena" target="_blank"
+                   style="color: var(--accent-cyan); text-decoration: none; display: inline-block; margin-top: 1rem;">
+                    github.com/oraios/serena →
+                </a>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">💡</span>
+                <h3 class="card-title">问题反馈</h3>
+                <p class="card-content">
+                    遇到 bug 或有功能建议？在 GitHub Issues 中提交
+                </p>
+                <a href="https://github.com/oraios/serena/issues" target="_blank"
+                   style="color: var(--accent-cyan); text-decoration: none; display: inline-block; margin-top: 1rem;">
+                    提交 Issue →
+                </a>
+            </div>
+
+            <div class="card">
+                <span class="card-icon">🤝</span>
+                <h3 class="card-title">贡献代码</h3>
+                <p class="card-content">
+                    Serena 是开源项目，欢迎贡献代码、文档或想法
+                </p>
+                <a href="https://github.com/oraios/serena/blob/main/CONTRIBUTING.md" target="_blank"
+                   style="color: var(--accent-cyan); text-decoration: none; display: inline-block; margin-top: 1rem;">
+                    贡献指南 →
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="container">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-family: 'Orbitron', monospace; font-size: 2rem; color: var(--accent-cyan); margin-bottom: 1rem;">
+                SERENA
+            </div>
+            <p style="color: var(--text-secondary);">
+                让 AI 真正理解你的代码
+            </p>
+        </div>
+
+        <div class="footer-links">
+            <a href="https://github.com/oraios/serena">GitHub</a>
+            <a href="https://github.com/oraios/serena/blob/main/LICENSE">MIT License</a>
+            <a href="https://github.com/oraios/serena/blob/main/docs">Documentation</a>
+        </div>
+
+        <p style="margin-top: 2rem; font-size: 0.9rem;">
+            Made with 💙 by the Oraios AI team | Sponsored by Visual Studio Code & Microsoft OSS
+        </p>
+    </footer>
+
+    <script>
+        // 滚动动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 代码块复制功能（可选）
+        document.querySelectorAll('.code-block').forEach(block => {
+            block.addEventListener('click', () => {
+                const code = block.querySelector('pre').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    const lang = block.getAttribute('data-lang');
+                    block.setAttribute('data-lang', '已复制!');
+                    setTimeout(() => {
+                        block.setAttribute('data-lang', lang);
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

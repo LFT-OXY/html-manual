@@ -60,4 +60,5 @@ nbdist/
 .vscode/
 .cursor/
 .claude/
-.codex/
+.codex/# Large PDF files
+编程/面试就业/面试pdf/咕泡教育80万字大厂面试真题深度解析.pdf
