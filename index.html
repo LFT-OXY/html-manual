@@ -313,6 +313,14 @@
 
                 renderList(allFiles);
 
+                // Check URL params and auto-load file
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileParam = urlParams.get('file');
+                if (fileParam) {
+                    const target = allFiles.find(f => f.path === fileParam);
+                    if (target) loadFile(target, null);
+                }
+
             } catch (err) {
                 console.error(err);
                 fileListEl.innerHTML = `<div class="text-red-500 p-4 text-center text-sm">加载失败，请刷新重试<br><span class="text-xs opacity-75">${err.message}</span></div>`;
@@ -464,45 +472,31 @@
                     // Render Markdown
                     mdContent.innerHTML = marked.parse(text);
 
-                    // Post-process: Intercept internal .md links
+                    // Post-process: Intercept internal .md links to open in new tab
                     const currentDir = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/') + 1) : '';
                     mdContent.querySelectorAll('a[href]').forEach(a => {
                         const href = a.getAttribute('href');
                         if (href && (href.endsWith('.md') || href.endsWith('.html')) && !href.startsWith('http')) {
-                            a.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                // Resolve relative path
-                                let targetPath = href;
-                                if (href.startsWith('./')) {
-                                    targetPath = currentDir + href.substring(2);
-                                } else if (href.startsWith('../')) {
-                                    // Handle parent directory
-                                    let parts = currentDir.split('/').filter(p => p);
-                                    let hrefParts = href.split('/');
-                                    for (const part of hrefParts) {
-                                        if (part === '..') parts.pop();
-                                        else if (part !== '.') parts.push(part);
-                                    }
-                                    targetPath = parts.join('/');
-                                } else if (!href.includes('/')) {
-                                    targetPath = currentDir + href;
+                            // Resolve relative path
+                            let targetPath = href;
+                            if (href.startsWith('./')) {
+                                targetPath = currentDir + href.substring(2);
+                            } else if (href.startsWith('../')) {
+                                let parts = currentDir.split('/').filter(p => p);
+                                let hrefParts = href.split('/');
+                                for (const part of hrefParts) {
+                                    if (part === '..') parts.pop();
+                                    else if (part !== '.') parts.push(part);
                                 }
-                                // Find and load target file
-                                const target = allFiles.find(f => f.path === targetPath || f.path.endsWith('/' + targetPath) || f.name === targetPath);
-                                if (target) {
-                                    loadFile(target, null);
-                                    // Update sidebar active state
-                                    document.querySelectorAll('.nav-item').forEach(item => {
-                                        item.classList.remove('active');
-                                        if (item.textContent.includes(target.name.replace(/\.(md|html)$/i, ''))) {
-                                            item.classList.add('active');
-                                        }
-                                    });
-                                } else {
-                                    alert('文档未找到: ' + targetPath);
-                                }
-                            });
-                            a.classList.add('internal-link', 'cursor-pointer');
+                                targetPath = parts.join('/');
+                            } else if (!href.includes('/')) {
+                                targetPath = currentDir + href;
+                            }
+                            // Set link to open in new tab with URL param
+                            const baseUrl = window.location.origin + window.location.pathname;
+                            a.href = `${baseUrl}?file=${encodeURIComponent(targetPath)}`;
+                            a.target = '_blank';
+                            a.classList.add('internal-link');
                         }
                     });
                     
