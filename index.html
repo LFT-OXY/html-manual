@@ -126,8 +126,43 @@
             transition: opacity 0.2s;
         }
         .lightbox-close:hover { opacity: 1; }
-        .prose img { cursor: zoom-in; transition: transform 0.2s; }
-        .prose img:hover { transform: scale(1.02); }
+
+        /* Image zoom controls */
+        .img-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .img-wrapper img { cursor: zoom-in; transition: transform 0.2s; }
+        .img-controls {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: none;
+            gap: 4px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .img-wrapper:hover .img-controls { display: flex; }
+        .img-controls button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .img-controls button:hover { background: rgba(255,255,255,0.4); }
+        .img-controls span {
+            color: white;
+            font-size: 12px;
+            line-height: 28px;
+            min-width: 40px;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="bg-white text-slate-700 h-screen flex overflow-hidden selection:bg-brand-100 selection:text-brand-900">
@@ -605,8 +640,42 @@
                         pre.insertBefore(header, code);
                     });
 
-                    // Add click event to images for lightbox
+                    // Add click event to images for lightbox and zoom controls
                     mdContent.querySelectorAll('img').forEach(img => {
+                        // Wrap image
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'img-wrapper';
+                        img.parentNode.insertBefore(wrapper, img);
+                        wrapper.appendChild(img);
+
+                        // Add controls
+                        const controls = document.createElement('div');
+                        controls.className = 'img-controls';
+                        controls.innerHTML = `
+                            <button class="zoom-out" title="缩小">−</button>
+                            <span class="zoom-level">100%</span>
+                            <button class="zoom-in" title="放大">+</button>
+                            <button class="zoom-reset" title="重置">↺</button>
+                            <button class="zoom-full" title="全屏"><i class="fas fa-expand"></i></button>
+                        `;
+                        wrapper.appendChild(controls);
+
+                        // Initialize scale
+                        let scale = 100;
+                        const zoomLevel = controls.querySelector('.zoom-level');
+
+                        const updateScale = (newScale) => {
+                            scale = Math.max(25, Math.min(200, newScale));
+                            img.style.width = scale + '%';
+                            zoomLevel.textContent = scale + '%';
+                        };
+
+                        controls.querySelector('.zoom-in').onclick = (e) => { e.stopPropagation(); updateScale(scale + 25); };
+                        controls.querySelector('.zoom-out').onclick = (e) => { e.stopPropagation(); updateScale(scale - 25); };
+                        controls.querySelector('.zoom-reset').onclick = (e) => { e.stopPropagation(); updateScale(100); };
+                        controls.querySelector('.zoom-full').onclick = (e) => { e.stopPropagation(); openLightbox(img.src); };
+
+                        // Click image to open lightbox
                         img.addEventListener('click', (e) => {
                             e.preventDefault();
                             openLightbox(img.src);
