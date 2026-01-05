@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Relay Service (CRS) 项目分析</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #4a5568;
+            background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(144, 202, 249, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        header {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            color: #2d3748;
+            padding: 60px 40px;
+            text-align: center;
+            border-bottom: 1px solid #edf2f7;
+        }
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            color: #1a202c;
+            letter-spacing: -0.5px;
+        }
+        header .subtitle {
+            opacity: 0.7;
+            font-size: 1.25em;
+            color: #718096;
+            font-weight: 300;
+        }
+        header .badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        .content {
+            padding: 50px;
+        }
+        section {
+            margin-bottom: 50px;
+        }
+        h2 {
+            color: #2d3748;
+            border-left: 5px solid #90CAF9;
+            padding-left: 20px;
+            margin-bottom: 25px;
+            font-size: 1.75em;
+            font-weight: 600;
+        }
+        h3 {
+            color: #4a5568;
+            margin: 30px 0 15px;
+            font-size: 1.25em;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .feature-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(144, 202, 249, 0.15);
+            border-color: #bbdefb;
+        }
+        .feature-card h4 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1em;
+        }
+        .feature-card p {
+            color: #718096;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+        .code-block {
+            background: #f8fafc;
+            color: #2d3748;
+            padding: 25px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            margin: 20px 0;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.75em;
+            color: #a0aec0;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .code-block code {
+            color: #3182ce;
+        }
+        .code-block .comment {
+            color: #718096;
+            font-style: italic;
+        }
+        .code-block .keyword {
+            color: #805ad5;
+        }
+        .code-block .string {
+            color: #38a169;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 25px 0;
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #edf2f7;
+        }
+        th, td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f7;
+        }
+        th {
+            background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+            color: #4a5568;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background: #fcfdfe;
+        }
+        .warning-box {
+            background: #fffbf0;
+            border-left: 4px solid #f6e05e;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+        .warning-box h4 {
+            color: #b7791f;
+            margin-bottom: 10px;
+        }
+        .warning-box ul {
+            color: #975a16;
+            margin-left: 20px;
+        }
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+        .step-list li {
+            counter-increment: step;
+            padding: 20px 20px 20px 70px;
+            margin: 15px 0;
+            background: #ffffff;
+            border-radius: 12px;
+            position: relative;
+            border: 1px solid #edf2f7;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #90CAF9 0%, #CE93D8 100%);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 4px 10px rgba(144, 202, 249, 0.3);
+        }
+        .architecture {
+            background: #f8fafc;
+            padding: 35px;
+            border-radius: 16px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .architecture pre {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            line-height: 1.8;
+            color: #4a5568;
+        }
+        .use-case {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid #86efac;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+        .use-case h4 {
+            color: #166534;
+            margin-bottom: 15px;
+        }
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: #edf2f7;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #718096;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #90CAF9 0%, #CE93D8 100%);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(144, 202, 249, 0.3);
+        }
+        footer {
+            background: #ffffff;
+            color: #718096;
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid #edf2f7;
+        }
+        footer a {
+            color: #5c9ce6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        footer a:hover {
+            color: #3182ce;
+        }
+        .icon {
+            font-size: 1.5em;
+        }
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 40px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .flow-box {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            font-weight: 500;
+            color: #4a5568;
+            border: 1px solid #edf2f7;
+        }
+        .flow-arrow {
+            color: #90CAF9;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Claude Relay Service (CRS)</h1>
+            <p class="subtitle">开源自托管的 Claude API 中继服务</p>
+            <span class="badge">MIT License</span>
+        </header>
+
+        <div class="content">
+            <!-- 项目概述 -->
+            <section>
+                <h2>项目概述</h2>
+                <p>CRS (Claude Relay Service) 是一个开源的自托管中继服务，专为 Claude API 设计。它允许用户统一管理多个 Claude 账号，支持 API 密钥生成、用量统计、费用分摊等功能，同时兼容 Claude Code、Gemini CLI、VSCode 插件等多种客户端。</p>
+
+                <div class="flow-diagram">
+                    <div class="flow-box">客户端<br><small>(Claude Code / Gemini CLI)</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box">CRS 中继服务<br><small>(自托管服务器)</small></div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-box">Anthropic API<br><small>(官方接口)</small></div>
+                </div>
+            </section>
+
+            <!-- 核心功能 -->
+            <section>
+                <h2>核心功能</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4><span class="icon">👥</span> 多账号管理</h4>
+                        <p>支持添加多个 Claude 账号，自动轮询切换，当某账号失效时自动故障转移到其他可用账号。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="icon">🔑</span> API 密钥生成</h4>
+                        <p>为每个用户生成独立的 API 密钥，支持自定义速率限制和模型访问权限。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="icon">📊</span> 用量统计</h4>
+                        <p>详细的 Token 使用量追踪、费用分析和性能监控，一目了然。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="icon">🌐</span> Web 管理面板</h4>
+                        <p>可视化的管理界面，方便添加账号、管理用户、查看统计数据。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="icon">🔄</span> 代理支持</h4>
+                        <p>支持 HTTP/SOCKS5 代理，适应各种网络环境。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4><span class="icon">🛡️</span> 客户端过滤</h4>
+                        <p>可限制特定客户端类型访问（如仅允许 Claude Code），增强安全性。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 系统要求 -->
+            <section>
+                <h2>系统要求</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>组件</th>
+                            <th>最低要求</th>
+                            <th>推荐配置</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Node.js</td>
+                            <td>18+</td>
+                            <td>20 LTS</td>
+                        </tr>
+                        <tr>
+                            <td>Redis</td>
+                            <td>6+</td>
+                            <td>7+</td>
+                        </tr>
+                        <tr>
+                            <td>内存</td>
+                            <td>512MB</td>
+                            <td>1GB+</td>
+                        </tr>
+                        <tr>
+                            <td>磁盘空间</td>
+                            <td>30GB</td>
+                            <td>50GB+</td>
+                        </tr>
+                        <tr>
+                            <td>操作系统</td>
+                            <td colspan="2">Linux (Ubuntu/Debian/CentOS)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 项目结构 -->
+            <section>
+                <h2>项目结构</h2>
+                <div class="architecture">
+                    <pre>
+claude-relay-service/
+├── src/                    # 后端源代码 (Node.js)
+│   ├── routes/            # API 路由定义
+│   ├── services/          # 业务逻辑服务
+│   ├── middleware/        # 中间件（认证、限流等）
+│   └── utils/             # 工具函数
+├── web/admin-spa/         # Web 管理面板 (SPA)
+├── config/                # 配置文件
+│   └── default.json       # 默认配置
+├── cli/                   # 命令行工具
+├── docs/                  # 文档
+├── tests/                 # 测试套件
+├── docker-compose.yml     # Docker 部署配置
+└── scripts/               # 实用脚本
+    └── manage.sh          # 管理脚本
+                    </pre>
+                </div>
+            </section>
+
+            <!-- 安装部署 -->
+            <section>
+                <h2>安装部署</h2>
+
+                <h3>方式一：脚本一键部署（推荐）</h3>
+                <div class="code-block" data-lang="bash">
+curl -fsSL https://pincc.ai/manage.sh -o manage.sh && chmod +x manage.sh && ./manage.sh install
+                </div>
+                <p>该脚本会自动安装 Node.js、Redis 及所有依赖，并完成服务配置。</p>
+
+                <h3>方式二：手动安装</h3>
+                <ol class="step-list">
+                    <li>安装 Node.js 18+ 和 Redis 6+</li>
+                    <li>克隆项目仓库
+                        <div class="code-block" data-lang="bash">
+git clone https://github.com/Wei-Shaw/claude-relay-service.git
+cd claude-relay-service
+                        </div>
+                    </li>
+                    <li>安装依赖
+                        <div class="code-block" data-lang="bash">
+npm install
+                        </div>
+                    </li>
+                    <li>配置环境变量并启动
+                        <div class="code-block" data-lang="bash">
+cp config/default.json config/local.json
+# 编辑 config/local.json 配置 Redis 连接等
+npm start
+                        </div>
+                    </li>
+                </ol>
+
+                <h3>方式三：Docker Compose 部署</h3>
+                <div class="code-block" data-lang="bash">
+git clone https://github.com/Wei-Shaw/claude-relay-service.git
+cd claude-relay-service
+docker-compose up -d
+                </div>
+            </section>
+
+            <!-- 初始配置 -->
+            <section>
+                <h2>初始配置步骤</h2>
+                <ol class="step-list">
+                    <li><strong>访问管理面板</strong>：打开浏览器访问 <code>http://服务器IP:3000/web</code></li>
+                    <li><strong>添加 Claude 账号</strong>：通过 OAuth 授权流程添加你的 Claude 账号</li>
+                    <li><strong>创建 API 密钥</strong>：为每个用户创建独立的 API 密钥，设置速率限制</li>
+                    <li><strong>配置客户端限制</strong>：（可选）限制特定客户端类型访问</li>
+                </ol>
+            </section>
+
+            <!-- 实际使用案例 -->
+            <section>
+                <h2>实际使用案例</h2>
+
+                <div class="use-case">
+                    <h4>案例一：Claude Code 集成</h4>
+                    <p>将 Claude Code CLI 工具连接到你的 CRS 中继服务：</p>
+                    <div class="code-block" data-lang="bash">
+<span class="comment"># 设置环境变量</span>
+<span class="keyword">export</span> ANTHROPIC_BASE_URL=<span class="string">"http://你的服务器IP:3000/api/"</span>
+<span class="keyword">export</span> ANTHROPIC_AUTH_TOKEN=<span class="string">"你的API密钥"</span>
+
+<span class="comment"># 启动 Claude Code</span>
+claude
+                    </div>
+                    <p><strong>效果</strong>：Claude Code 的所有请求将通过你的 CRS 服务转发，可在管理面板查看用量统计。</p>
+                </div>
+
+                <div class="use-case">
+                    <h4>案例二：Gemini CLI 集成</h4>
+                    <p>将 Gemini CLI 工具连接到 CRS：</p>
+                    <div class="code-block" data-lang="bash">
+<span class="comment"># 设置环境变量</span>
+<span class="keyword">export</span> CODE_ASSIST_ENDPOINT=<span class="string">"http://你的服务器IP:3000/gemini"</span>
+<span class="keyword">export</span> GOOGLE_CLOUD_ACCESS_TOKEN=<span class="string">"你的API密钥"</span>
+
+<span class="comment"># 启动 Gemini CLI</span>
+gemini
+                    </div>
+                </div>
+
+                <div class="use-case">
+                    <h4>案例三：团队费用分摊</h4>
+                    <p><strong>场景</strong>：一个 5 人开发团队希望共享 Claude Pro 订阅，同时追踪各成员用量。</p>
+                    <ol>
+                        <li>管理员在 CRS 中添加团队的 Claude 账号</li>
+                        <li>为每位成员创建独立 API 密钥（如 <code>user-alice</code>, <code>user-bob</code>）</li>
+                        <li>设置每人的速率限制（如每日 1000 请求）</li>
+                        <li>月底通过管理面板导出用量报告，按比例分摊费用</li>
+                    </ol>
+                </div>
+
+                <div class="use-case">
+                    <h4>案例四：VSCode 扩展集成</h4>
+                    <p>在 VSCode 的 Claude 扩展中配置自定义 API 端点：</p>
+                    <div class="code-block" data-lang="json">
+{
+    "claude.apiEndpoint": "http://你的服务器IP:3000/api/",
+    "claude.apiKey": "你的API密钥"
+}
+                    </div>
+                </div>
+            </section>
+
+            <!-- 完整运行示例 -->
+            <section>
+                <h2>完整运行示例</h2>
+                <p>以下是从零开始部署并使用 CRS 的完整流程：</p>
+
+                <div class="code-block" data-lang="bash">
+<span class="comment"># ========== 第一步：服务器端部署 ==========</span>
+
+<span class="comment"># 1. 下载并执行安装脚本</span>
+curl -fsSL https://pincc.ai/manage.sh -o manage.sh
+chmod +x manage.sh
+./manage.sh install
+
+<span class="comment"># 2. 安装完成后，查看服务状态</span>
+./manage.sh status
+
+<span class="comment"># 3. 查看服务日志（可选）</span>
+./manage.sh logs
+
+<span class="comment"># ========== 第二步：管理面板配置 ==========</span>
+
+<span class="comment"># 1. 浏览器访问：http://服务器IP:3000/web</span>
+<span class="comment"># 2. 登录管理面板（首次使用需设置管理员密码）</span>
+<span class="comment"># 3. 点击"添加账号" → 通过 OAuth 授权添加 Claude 账号</span>
+<span class="comment"># 4. 点击"API 密钥" → 创建新密钥，记录生成的密钥</span>
+
+<span class="comment"># ========== 第三步：客户端使用 ==========</span>
+
+<span class="comment"># 方法 A：临时设置环境变量</span>
+<span class="keyword">export</span> ANTHROPIC_BASE_URL=<span class="string">"http://你的服务器IP:3000/api/"</span>
+<span class="keyword">export</span> ANTHROPIC_AUTH_TOKEN=<span class="string">"sk-crs-xxxxxxxxxxxxxxxx"</span>
+claude
+
+<span class="comment"># 方法 B：写入 shell 配置文件（永久生效）</span>
+<span class="keyword">echo</span> <span class="string">'export ANTHROPIC_BASE_URL="http://你的服务器IP:3000/api/"'</span> >> ~/.bashrc
+<span class="keyword">echo</span> <span class="string">'export ANTHROPIC_AUTH_TOKEN="sk-crs-xxxxxxxxxxxxxxxx"'</span> >> ~/.bashrc
+<span class="keyword">source</span> ~/.bashrc
+claude
+
+<span class="comment"># ========== 常用管理命令 ==========</span>
+
+./manage.sh start     <span class="comment"># 启动服务</span>
+./manage.sh stop      <span class="comment"># 停止服务</span>
+./manage.sh restart   <span class="comment"># 重启服务</span>
+./manage.sh update    <span class="comment"># 更新到最新版本</span>
+./manage.sh uninstall <span class="comment"># 卸载服务</span>
+                </div>
+            </section>
+
+            <!-- 安全警告 -->
+            <section>
+                <h2>安全注意事项</h2>
+                <div class="warning-box">
+                    <h4>⚠️ 重要安全警告</h4>
+                    <ul>
+                        <li><strong>版本漏洞</strong>：v1.1.240 及以下版本存在严重的管理员认证绕过漏洞，请立即升级到 v1.1.241+ 或迁移到 CRS 2.0 (sub2api)</li>
+                        <li><strong>服务条款</strong>：使用本服务可能违反 Anthropic 的服务条款，账号封禁风险由用户自行承担</li>
+                        <li><strong>数据安全</strong>：所有请求仅通过你自己的服务器转发，不经过第三方</li>
+                        <li><strong>HTTPS</strong>：生产环境强烈建议配置 SSL/TLS 证书启用 HTTPS</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- API 端点 -->
+            <section>
+                <h2>API 端点参考</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>端点</th>
+                            <th>用途</th>
+                            <th>兼容客户端</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/api/</code></td>
+                            <td>Claude API 代理</td>
+                            <td>Claude Code, VSCode 扩展</td>
+                        </tr>
+                        <tr>
+                            <td><code>/gemini</code></td>
+                            <td>Gemini 兼容接口</td>
+                            <td>Gemini CLI</td>
+                        </tr>
+                        <tr>
+                            <td><code>/web</code></td>
+                            <td>管理面板</td>
+                            <td>浏览器</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+        </div>
+
+        <footer>
+            <p>项目地址：<a href="https://github.com/Wei-Shaw/claude-relay-service" target="_blank">https://github.com/Wei-Shaw/claude-relay-service</a></p>
+            <p style="margin-top: 10px; opacity: 0.7;">本文档生成于 2025-12-25 | 基于 GitHub 公开信息整理</p>
+        </footer>
+    </div>
+</body>
+</html>
