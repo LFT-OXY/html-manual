@@ -326,33 +326,98 @@
             }
         }
 
+        // Build tree structure from flat file list
+        function buildTree(files) {
+            const tree = {};
+            files.forEach(file => {
+                const parts = file.path.split('/');
+                let current = tree;
+                parts.forEach((part, idx) => {
+                    if (idx === parts.length - 1) {
+                        // File node
+                        current[part] = { _file: file };
+                    } else {
+                        // Directory node
+                        if (!current[part]) current[part] = {};
+                        current = current[part];
+                    }
+                });
+            });
+            return tree;
+        }
+
         function renderList(files) {
             fileListEl.innerHTML = '';
-            
+
             if (files.length === 0) {
                 fileListEl.innerHTML = `<div class="text-slate-400 p-4 text-center text-sm">未找到相关笔记</div>`;
                 return;
             }
 
-            files.forEach(file => {
-                const isMd = file.name.endsWith('.md');
-                const iconClass = isMd ? 'fa-markdown text-blue-500' : 'fa-html5 text-orange-500';
-                const name = file.name.replace(/\.(md|html)$/i, '');
-                const date = 'Recently updated'; // Placeholder as GitHub Content API doesn't give dates
+            const tree = buildTree(files);
+            renderTree(tree, fileListEl, 0);
+        }
 
-                const el = document.createElement('div');
-                el.className = 'nav-item group flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-slate-50 transition-all border-r-0 hover:border-r-0';
-                el.onclick = () => loadFile(file, el);
-                el.innerHTML = `
-                    <div class="mt-1 w-5 flex-shrink-0 text-center">
-                        <i class="fab ${iconClass} text-lg opacity-80 group-hover:opacity-100 transition"></i>
-                    </div>
-                    <div class="overflow-hidden">
-                        <h4 class="text-sm font-medium text-slate-700 group-hover:text-slate-900 truncate transition">${name}</h4>
-                        <p class="text-[10px] text-slate-400 mt-0.5 truncate">${file.path}</p>
-                    </div>
-                `;
-                fileListEl.appendChild(el);
+        function renderTree(node, container, depth) {
+            // Sort: directories first, then files
+            const entries = Object.entries(node).sort((a, b) => {
+                const aIsFile = a[1]._file !== undefined;
+                const bIsFile = b[1]._file !== undefined;
+                if (aIsFile !== bIsFile) return aIsFile ? 1 : -1;
+                return a[0].localeCompare(b[0], 'zh-CN');
+            });
+
+            entries.forEach(([name, value]) => {
+                if (value._file) {
+                    // Render file
+                    const file = value._file;
+                    const isMd = file.name.endsWith('.md');
+                    const iconClass = isMd ? 'fa-markdown text-blue-500' : 'fa-html5 text-orange-500';
+                    const displayName = file.name.replace(/\.(md|html)$/i, '');
+
+                    const el = document.createElement('div');
+                    el.className = 'nav-item group flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-all';
+                    el.style.paddingLeft = `${12 + depth * 16}px`;
+                    el.onclick = () => loadFile(file, el);
+                    el.innerHTML = `
+                        <div class="mt-0.5 w-4 flex-shrink-0 text-center">
+                            <i class="fab ${iconClass} text-sm opacity-80 group-hover:opacity-100 transition"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 class="text-sm font-medium text-slate-700 group-hover:text-slate-900 truncate transition">${displayName}</h4>
+                        </div>
+                    `;
+                    container.appendChild(el);
+                } else {
+                    // Render directory
+                    const dirEl = document.createElement('div');
+                    dirEl.className = 'directory-item';
+
+                    const header = document.createElement('div');
+                    header.className = 'flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-all text-slate-600 hover:text-slate-900';
+                    header.style.paddingLeft = `${12 + depth * 16}px`;
+                    header.innerHTML = `
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 dir-icon"></i>
+                        <i class="fas fa-folder text-amber-500 text-sm"></i>
+                        <span class="text-sm font-medium truncate">${name}</span>
+                    `;
+
+                    const childContainer = document.createElement('div');
+                    childContainer.className = 'dir-children';
+
+                    header.onclick = () => {
+                        const icon = header.querySelector('.dir-icon');
+                        const isCollapsed = childContainer.style.display === 'none';
+                        childContainer.style.display = isCollapsed ? 'block' : 'none';
+                        icon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+                    };
+
+                    dirEl.appendChild(header);
+                    dirEl.appendChild(childContainer);
+                    container.appendChild(dirEl);
+
+                    renderTree(value, childContainer, depth + 1);
+                }
             });
         }
 
@@ -475,7 +540,7 @@
                     // Remove MD Layout for Fullscreen HTML
                     articleContainer.className = 'flex-1 flex flex-col bg-white shadow-sm border-x border-slate-100 overflow-hidden'; // HTML needs no scroll on container, iframe has it
 
-                    htmlFrame.src = file.name; // Use relative path
+                    htmlFrame.src = file.path; // Use full path for subdirectories
                     htmlContainer.classList.remove('hidden');
                 }
             } catch (err) {
