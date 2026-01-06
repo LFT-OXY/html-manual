@@ -2,4 +2,4 @@ github 地址： https://github.com/VCnoC/Claude-Code-Zen-mcp-Skill-Work?tab=rea
 
 
 
-[Zen MCP Skill Work](https://lft-oxy.github.io/html-manual/Claude-Code-Zen-MCP-Skill-Work-Guide.html)
+[Zen MCP Skill Work](https://note.3oxy.com/html/Claude-Code-Zen-MCP-Skill-Work-Guide.html)

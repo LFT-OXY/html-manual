@@ -1,0 +1,2833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WezTerm 完整配置指南 | 现代终端模拟器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════════════════════════════════════════
+       CSS Variables & Reset
+       ══════════════════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg-main: #FFFEFC;
+      --bg-card: #FFFFFF;
+      --text-primary: #2D2D2D;
+      --text-secondary: #4A4644;
+      --highlight-bg: #E6F4F1;
+      --accent-primary: #FF4F00;
+      --link-color: #2E6BE6;
+      --path-color: #6366F1;
+      --success-color: #2F9E44;
+      --success-bg: #E6F9ED;
+      --warning-color: #F08C00;
+      --warning-bg: #FFF4E6;
+      --error-color: #D63939;
+      --error-bg: #FFEBEB;
+      --code-bg: #1e1e2e;
+      --code-text: #cdd6f4;
+      --border-color: #E8E6E3;
+      --font-heading: 'Fraunces', Georgia, serif;
+      --font-body: 'Public Sans', system-ui, sans-serif;
+      --font-code: 'Fira Code', Consolas, monospace;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+      --transition-base: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      --max-width: 1200px;
+      --sidebar-width: 280px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 17px;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.8;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Typography
+       ══════════════════════════════════════════════════════════════════════════════ */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--text-primary);
+    }
+
+    h1 { font-size: 2.8rem; }
+    h2 { font-size: 1.8rem; margin-top: 3rem; margin-bottom: 1.5rem; }
+    h3 { font-size: 1.4rem; margin-top: 2rem; margin-bottom: 1rem; }
+    h4 { font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+
+    p { margin-bottom: 1rem; }
+
+    a {
+      color: var(--link-color);
+      text-decoration: none;
+      transition: all var(--transition-base);
+    }
+
+    a:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    code {
+      font-family: var(--font-code);
+      background: #F5F4F2;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Layout
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .page-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      padding: 2rem 1.5rem;
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-logo {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sidebar-logo::before {
+      content: '>';
+      color: var(--accent-primary);
+      font-family: var(--font-code);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--border-color);
+      border-radius: 2px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-primary);
+      width: 0%;
+      transition: width 150ms ease;
+    }
+
+    .toc {
+      list-style: none;
+      flex: 1;
+    }
+
+    .toc-item {
+      margin-bottom: 0.25rem;
+    }
+
+    .toc-link {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      transition: all var(--transition-base);
+    }
+
+    .toc-link:hover {
+      background: var(--highlight-bg);
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .toc-link.active {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .back-to-top {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .back-to-top a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: var(--highlight-bg);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      max-width: calc(var(--max-width) + var(--sidebar-width));
+    }
+
+    .content-wrapper {
+      max-width: var(--max-width);
+      padding: 0 3rem 4rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Hero Section
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .hero {
+      padding: 4rem 3rem;
+      background: linear-gradient(180deg, var(--highlight-bg) 0%, var(--bg-main) 100%);
+      margin-bottom: 2rem;
+    }
+
+    .hero-content {
+      max-width: var(--max-width);
+    }
+
+    .hero h1 {
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.9rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .badge-accent {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .hero-description {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.9rem 1.8rem;
+      background: var(--accent-primary);
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+
+    .cta-button:hover {
+      background: #E64600;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      text-decoration: none;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Cards & Sections
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-base);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+      }
+    }
+
+    .card-highlight {
+      background: var(--highlight-bg);
+      border-color: #C2E0DA;
+    }
+
+    .card-success {
+      background: var(--success-bg);
+      border-color: #B2DFBC;
+    }
+
+    .card-warning {
+      background: var(--warning-bg);
+      border-color: #FFD8A8;
+    }
+
+    .card-error {
+      background: var(--error-bg);
+      border-color: #FFC0C0;
+    }
+
+    section {
+      margin-bottom: 4rem;
+    }
+
+    .section-anchor {
+      position: relative;
+    }
+
+    .section-anchor::before {
+      content: '';
+      display: block;
+      height: 100px;
+      margin-top: -100px;
+      visibility: hidden;
+    }
+
+    .anchor-link {
+      opacity: 0;
+      margin-left: 0.5rem;
+      color: var(--text-secondary);
+      transition: opacity var(--transition-base);
+    }
+
+    h2:hover .anchor-link,
+    h3:hover .anchor-link {
+      opacity: 1;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Learning Objectives
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .objectives-list {
+      list-style: none;
+    }
+
+    .objectives-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .objectives-list li:last-child {
+      border-bottom: none;
+    }
+
+    .objectives-list li::before {
+      content: '✓';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: var(--success-color);
+      color: white;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 0.2rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Code Blocks
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .code-block {
+      background: var(--code-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #181825;
+      border-bottom: 1px solid #313244;
+    }
+
+    .code-filename {
+      color: #a6adc8;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+    }
+
+    .code-lang {
+      color: #89b4fa;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .copy-button {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.8rem;
+      background: #313244;
+      border: none;
+      border-radius: 6px;
+      color: #cdd6f4;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+
+    .copy-button:hover {
+      background: #45475a;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      overflow-x: auto;
+    }
+
+    .code-content pre {
+      margin: 0;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--code-text);
+    }
+
+    .code-content .comment { color: #6c7086; }
+    .code-content .keyword { color: #cba6f7; }
+    .code-content .string { color: #a6e3a1; }
+    .code-content .number { color: #fab387; }
+    .code-content .function { color: #89b4fa; }
+    .code-content .property { color: #89dceb; }
+    .code-content .operator { color: #94e2d5; }
+
+    /* Terminal */
+    .terminal {
+      background: var(--code-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #181825;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .terminal-dot.red { background: #f38ba8; }
+    .terminal-dot.yellow { background: #f9e2af; }
+    .terminal-dot.green { background: #a6e3a1; }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      color: #6c7086;
+      font-size: 0.85rem;
+    }
+
+    .terminal-content {
+      padding: 1rem 1.25rem;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      color: var(--code-text);
+    }
+
+    .terminal-line {
+      display: flex;
+      margin-bottom: 0.5rem;
+    }
+
+    .terminal-prompt {
+      color: #a6e3a1;
+      margin-right: 0.75rem;
+      user-select: none;
+    }
+
+    .terminal-output {
+      color: #bac2de;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Split Layout
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .split-content {
+      position: sticky;
+      top: 2rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Comparison Cards
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .comparison-card {
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    .comparison-card.bad {
+      background: var(--error-bg);
+      border: 1px solid #FFC0C0;
+    }
+
+    .comparison-card.good {
+      background: var(--success-bg);
+      border: 1px solid #B2DFBC;
+    }
+
+    .comparison-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .comparison-card.bad .comparison-header { color: var(--error-color); }
+    .comparison-card.good .comparison-header { color: var(--success-color); }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Tabs
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .tabs {
+      margin: 2rem 0;
+    }
+
+    .tab-list {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+
+    .tab-button {
+      padding: 0.75rem 1.5rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+
+    .tab-button:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-button.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+
+    .tab-button:focus {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 1.5rem 0;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Vocabulary Grid
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .vocab-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .vocab-term {
+      font-family: var(--font-code);
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .vocab-def {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    /* Tooltip */
+    .tooltip-term {
+      border-bottom: 1px dashed var(--text-secondary);
+      cursor: help;
+      position: relative;
+    }
+
+    .tooltip-term:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5rem 0.75rem;
+      background: var(--text-primary);
+      color: white;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Troubleshooting
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .trouble-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+
+    .trouble-table th,
+    .trouble-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .trouble-table th {
+      background: var(--highlight-bg);
+      font-weight: 600;
+    }
+
+    .trouble-table tr:hover {
+      background: #FAFAF8;
+    }
+
+    /* Accordion */
+    details {
+      margin: 1rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    summary:hover {
+      background: #FAFAF8;
+    }
+
+    summary::before {
+      content: '▶';
+      font-size: 0.7rem;
+      transition: transform var(--transition-base);
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details > div {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Cheat Sheet
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .cheat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    .cheat-table th,
+    .cheat-table td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .cheat-table th {
+      background: var(--highlight-bg);
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .cheat-table code {
+      background: var(--code-bg);
+      color: var(--code-text);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Quiz
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .quiz {
+      margin: 2rem 0;
+    }
+
+    .quiz-question {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+
+    .quiz-option:hover {
+      border-color: var(--link-color);
+    }
+
+    .quiz-option:focus {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .quiz-option.correct {
+      border-color: var(--success-color);
+      background: var(--success-bg);
+    }
+
+    .quiz-option.incorrect {
+      border-color: var(--error-color);
+      background: var(--error-bg);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .quiz-option.incorrect {
+        animation: shake 0.3s ease;
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .quiz-feedback {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .quiz-feedback.show {
+      display: block;
+    }
+
+    .quiz-feedback.correct {
+      background: var(--success-bg);
+      color: var(--success-color);
+    }
+
+    .quiz-feedback.incorrect {
+      background: var(--error-bg);
+      color: var(--error-color);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Footer
+       ══════════════════════════════════════════════════════════════════════════════ */
+    footer {
+      margin-top: 4rem;
+      padding: 2rem;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .footer-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Floating Elements
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .floating-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 48px;
+      height: 48px;
+      background: var(--accent-primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-base);
+      z-index: 99;
+    }
+
+    .floating-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .floating-top:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 0.75rem 1.5rem;
+      background: var(--text-primary);
+      color: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-base);
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Mode Toggle
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .mode-toggle label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border-color);
+      border-radius: 24px;
+      transition: var(--transition-base);
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: var(--transition-base);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent-primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(24px);
+    }
+
+    .advanced-content {
+      display: none;
+    }
+
+    body.show-advanced .advanced-content {
+      display: block;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Mobile Hamburger
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 200;
+      width: 44px;
+      height: 44px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--text-primary);
+      transition: all var(--transition-base);
+    }
+
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Responsive
+       ══════════════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 1024px) {
+      .split-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .split-content {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      html {
+        font-size: 16px;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      main {
+        margin-left: 0;
+      }
+
+      .hero {
+        padding: 5rem 1.5rem 2rem;
+      }
+
+      .content-wrapper {
+        padding: 0 1.5rem 3rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tab-list {
+        overflow-x: auto;
+      }
+
+      .footer-meta {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Step List
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+    }
+
+    .step-item {
+      position: relative;
+      padding-left: 3.5rem;
+      padding-bottom: 2rem;
+      border-left: 2px solid var(--path-color);
+      margin-left: 1rem;
+    }
+
+    .step-item:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+
+    .step-item::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: -1rem;
+      top: 0;
+      width: 2rem;
+      height: 2rem;
+      background: var(--path-color);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Concept Map
+       ══════════════════════════════════════════════════════════════════════════════ */
+    .concept-map {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin: 1.5rem 0;
+    }
+
+    .concept-node {
+      padding: 0.75rem 1.25rem;
+      background: var(--highlight-bg);
+      border: 2px solid #C2E0DA;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .concept-node.start {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .concept-arrow {
+      display: flex;
+      align-items: center;
+      color: var(--path-color);
+      font-size: 1.5rem;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════════
+       Print
+       ══════════════════════════════════════════════════════════════════════════════ */
+    @media print {
+      .sidebar,
+      .hamburger,
+      .floating-top,
+      .copy-button,
+      .mode-toggle {
+        display: none !important;
+      }
+
+      main {
+        margin-left: 0;
+      }
+
+      .card {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hamburger Menu (Mobile) -->
+  <button class="hamburger" aria-label="Toggle navigation" onclick="toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" role="navigation" aria-label="Table of contents">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">WezTerm Guide</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+    <ul class="toc">
+      <li class="toc-item"><a href="#objectives" class="toc-link">学习目标</a></li>
+      <li class="toc-item"><a href="#summary" class="toc-link">核心摘要</a></li>
+      <li class="toc-item"><a href="#concepts" class="toc-link">概念图</a></li>
+      <li class="toc-item"><a href="#foundations" class="toc-link">基础知识</a></li>
+      <li class="toc-item"><a href="#installation" class="toc-link">安装步骤</a></li>
+      <li class="toc-item"><a href="#configuration" class="toc-link">详细配置</a></li>
+      <li class="toc-item"><a href="#patterns" class="toc-link">最佳实践</a></li>
+      <li class="toc-item"><a href="#examples" class="toc-link">完整示例</a></li>
+      <li class="toc-item"><a href="#vocabulary" class="toc-link">术语表</a></li>
+      <li class="toc-item"><a href="#troubleshooting" class="toc-link">故障排除</a></li>
+      <li class="toc-item"><a href="#cheatsheet" class="toc-link">速查表</a></li>
+      <li class="toc-item"><a href="#quiz" class="toc-link">自测评估</a></li>
+      <li class="toc-item"><a href="#next-steps" class="toc-link">下一步</a></li>
+    </ul>
+    <div class="back-to-top">
+      <a href="#top">↑ 返回顶部</a>
+    </div>
+  </aside>
+
+  <div class="page-wrapper">
+    <main id="top">
+      <!-- Hero Section -->
+      <header class="hero">
+        <div class="hero-content">
+          <h1>WezTerm 完整配置指南</h1>
+          <div class="hero-meta">
+            <span class="badge badge-accent">macOS</span>
+            <span class="badge">难度：中级</span>
+            <span class="badge">阅读时间：25 分钟</span>
+            <span class="badge">前置知识：终端基础</span>
+          </div>
+          <p class="hero-description">
+            WezTerm 是一款基于 Rust 开发的现代 GPU 加速终端模拟器，支持 Lua 脚本配置、多平台、连字、图像显示等高级特性。本指南将带你从安装到完成一套精美的个性化配置。
+          </p>
+          <a href="#installation" class="cta-button">
+            开始安装 →
+          </a>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <label for="modeSwitch">显示高级内容</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="modeSwitch" onchange="toggleAdvanced()">
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+
+        <!-- Learning Objectives -->
+        <section id="objectives" class="section-anchor">
+          <h2>学习目标 <a href="#objectives" class="anchor-link">#</a></h2>
+          <div class="card card-highlight">
+            <ul class="objectives-list">
+              <li>掌握 WezTerm 在 macOS 上的安装方法</li>
+              <li>理解 WezTerm Lua 配置文件的结构与语法</li>
+              <li>实现主题自动跟随系统深浅色模式切换</li>
+              <li>配置毛玻璃透明效果、字体连字与自定义快捷键</li>
+              <li>添加实时 CPU/内存监控 Status Bar</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Core Summary -->
+        <section id="summary" class="section-anchor">
+          <h2>核心摘要 <a href="#summary" class="anchor-link">#</a></h2>
+          <div class="card card-highlight">
+            <p><strong>WezTerm</strong> 是一款跨平台的 GPU 加速终端模拟器，使用 <span class="tooltip-term" data-tooltip="一种系统编程语言，以安全性和性能著称">Rust</span> 编写。它通过 <span class="tooltip-term" data-tooltip="一种轻量级脚本语言，常用于配置和扩展">Lua</span> 脚本实现高度可定制化配置，支持连字、图像协议、多窗格、SSH 复用等现代终端特性。</p>
+            <p>配置文件位于 <code>~/.config/wezterm/wezterm.lua</code>，所有修改即时生效，无需重启终端。</p>
+          </div>
+        </section>
+
+        <!-- Concept Map -->
+        <section id="concepts" class="section-anchor">
+          <h2>概念图 <a href="#concepts" class="anchor-link">#</a></h2>
+          <div class="concept-map">
+            <div class="concept-node start">安装 WezTerm</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">创建配置文件</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">主题配色</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">字体设置</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">窗口样式</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">快捷键</div>
+            <div class="concept-arrow">→</div>
+            <div class="concept-node">Status Bar</div>
+          </div>
+        </section>
+
+        <!-- Foundations -->
+        <section id="foundations" class="section-anchor">
+          <h2>基础知识 <a href="#foundations" class="anchor-link">#</a></h2>
+
+          <h3>先决条件</h3>
+          <ul>
+            <li>macOS 10.14 (Mojave) 或更高版本</li>
+            <li>已安装 <a href="https://brew.sh" target="_blank">Homebrew</a> 包管理器</li>
+            <li>基本的终端使用经验</li>
+            <li>（可选）已安装 Nerd Font 字体以显示图标</li>
+          </ul>
+
+          <h3>为什么选择 WezTerm？</h3>
+          <div class="card">
+            <ul>
+              <li><strong>GPU 加速</strong>：使用 WebGPU/Metal 渲染，滚动丝滑流畅</li>
+              <li><strong>Lua 配置</strong>：比 JSON/YAML 更灵活，支持条件逻辑和函数</li>
+              <li><strong>跨平台</strong>：同一配置文件可在 macOS/Linux/Windows 使用</li>
+              <li><strong>内置功能丰富</strong>：SSH 复用、串行端口、图像协议无需插件</li>
+              <li><strong>热重载</strong>：配置文件修改后自动生效</li>
+            </ul>
+          </div>
+
+          <h3>常见误区</h3>
+          <div class="card card-warning">
+            <p><strong>❌ 误区：</strong>WezTerm 配置文件必须放在 <code>~/.wezterm.lua</code></p>
+            <p><strong>✓ 正确：</strong>WezTerm 支持多个配置路径，推荐使用 <code>~/.config/wezterm/wezterm.lua</code>，更符合 XDG 规范且便于版本控制。</p>
+          </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation" class="section-anchor">
+          <h2>安装步骤 <a href="#installation" class="anchor-link">#</a></h2>
+
+          <p>选择你的操作系统查看对应的安装步骤：</p>
+
+          <div class="tabs">
+            <div class="tab-list" role="tablist">
+              <button class="tab-button active" role="tab" aria-selected="true" onclick="switchTab(event, 'install-macos')">🍎 macOS</button>
+              <button class="tab-button" role="tab" aria-selected="false" onclick="switchTab(event, 'install-windows')">🪟 Windows</button>
+              <button class="tab-button" role="tab" aria-selected="false" onclick="switchTab(event, 'install-linux')">🐧 Linux</button>
+            </div>
+
+            <!-- macOS Installation -->
+            <div id="install-macos" class="tab-panel active" role="tabpanel">
+              <ol class="step-list">
+                <li class="step-item">
+                  <div class="step-title">使用 Homebrew 安装 WezTerm</div>
+                  <p>WezTerm 已收录在 Homebrew Cask 中，一行命令即可安装：</p>
+                  <div class="terminal">
+                    <div class="terminal-header">
+                      <span class="terminal-dot red"></span>
+                      <span class="terminal-dot yellow"></span>
+                      <span class="terminal-dot green"></span>
+                      <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-content">
+                      <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span>brew install --cask wezterm</span>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+
+                <li class="step-item">
+                  <div class="step-title">安装 Nerd Font 字体（推荐）</div>
+                  <p>Nerd Font 包含丰富的图标字符，用于显示文件类型图标、Git 状态、系统监控图标等：</p>
+                  <div class="terminal">
+                    <div class="terminal-header">
+                      <span class="terminal-dot red"></span>
+                      <span class="terminal-dot yellow"></span>
+                      <span class="terminal-dot green"></span>
+                      <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-content">
+                      <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span>brew install --cask font-jetbrains-mono-nerd-font</span>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+
+                <li class="step-item">
+                  <div class="step-title">创建配置目录和文件</div>
+                  <div class="terminal">
+                    <div class="terminal-header">
+                      <span class="terminal-dot red"></span>
+                      <span class="terminal-dot yellow"></span>
+                      <span class="terminal-dot green"></span>
+                      <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-content">
+                      <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span>mkdir -p ~/.config/wezterm && touch ~/.config/wezterm/wezterm.lua</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">配置文件路径：<code>~/.config/wezterm/wezterm.lua</code></p>
+                </li>
+
+                <li class="step-item">
+                  <div class="step-title">验证安装</div>
+                  <p>打开 WezTerm 应用，运行以下命令查看版本：</p>
+                  <div class="terminal">
+                    <div class="terminal-header">
+                      <span class="terminal-dot red"></span>
+                      <span class="terminal-dot yellow"></span>
+                      <span class="terminal-dot green"></span>
+                      <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-content">
+                      <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span>wezterm --version</span>
+                      </div>
+                      <div class="terminal-line">
+                        <span class="terminal-output">wezterm 20240203-110809-5046fc22</span>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <!-- Windows Installation -->
+            <div id="install-windows" class="tab-panel" role="tabpanel">
+              <h4>方式一：使用 Winget（推荐）</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">PowerShell</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>winget install wez.wezterm</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>方式二：使用 Scoop</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">PowerShell</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>scoop bucket add extras</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>scoop install wezterm</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>方式三：使用 Chocolatey</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">PowerShell (管理员)</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>choco install wezterm -y</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>方式四：手动下载安装</h4>
+              <p>访问 <a href="https://wezfurlong.org/wezterm/install/windows.html" target="_blank">WezTerm 官网下载页</a> 下载 <code>.exe</code> 安装包或 <code>.zip</code> 便携版。</p>
+
+              <h4>安装 Nerd Font 字体</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">PowerShell</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 使用 Scoop 安装</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>scoop bucket add nerd-fonts</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>scoop install JetBrainsMono-NF</span>
+                  </div>
+                </div>
+              </div>
+              <p style="font-size: 0.9rem; color: var(--text-secondary);">或从 <a href="https://www.nerdfonts.com/font-downloads" target="_blank">Nerd Fonts 官网</a> 下载字体后手动安装。</p>
+
+              <h4>配置文件路径</h4>
+              <p>Windows 上配置文件位于：</p>
+              <ul>
+                <li><code>C:\Users\你的用户名\.config\wezterm\wezterm.lua</code>（推荐）</li>
+                <li><code>C:\Users\你的用户名\.wezterm.lua</code></li>
+              </ul>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">PowerShell</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 创建配置目录</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>mkdir "$env:USERPROFILE\.config\wezterm" -Force</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">></span>
+                    <span>New-Item "$env:USERPROFILE\.config\wezterm\wezterm.lua" -ItemType File</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Linux Installation -->
+            <div id="install-linux" class="tab-panel" role="tabpanel">
+              <h4>Ubuntu / Debian</h4>
+              <p>WezTerm 提供官方 APT 仓库：</p>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 添加 GPG 密钥</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 添加仓库</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 安装</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>sudo apt update && sudo apt install wezterm</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>Fedora / RHEL</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>sudo dnf copr enable wezfurlong/wezterm-nightly</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>sudo dnf install wezterm</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>Arch Linux</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>sudo pacman -S wezterm</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 或使用 AUR (nightly)</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>yay -S wezterm-git</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>Flatpak（通用）</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>flatpak install flathub org.wezfurlong.wezterm</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>AppImage（便携版）</h4>
+              <p>从 <a href="https://github.com/wez/wezterm/releases" target="_blank">GitHub Releases</a> 下载 <code>.AppImage</code> 文件：</p>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>chmod +x WezTerm-*.AppImage</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>./WezTerm-*.AppImage</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>安装 Nerd Font 字体</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">#</span>
+                    <span class="terminal-output"> 下载并安装 JetBrainsMono Nerd Font</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>mkdir -p ~/.local/share/fonts</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>cd ~/.local/share/fonts && curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>unzip JetBrainsMono.zip && rm JetBrainsMono.zip</span>
+                  </div>
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>fc-cache -fv</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4>配置文件路径</h4>
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="terminal-dot red"></span>
+                  <span class="terminal-dot yellow"></span>
+                  <span class="terminal-dot green"></span>
+                  <span class="terminal-title">Terminal</span>
+                </div>
+                <div class="terminal-content">
+                  <div class="terminal-line">
+                    <span class="terminal-prompt">$</span>
+                    <span>mkdir -p ~/.config/wezterm && touch ~/.config/wezterm/wezterm.lua</span>
+                  </div>
+                </div>
+              </div>
+              <p style="font-size: 0.9rem; color: var(--text-secondary);">配置文件路径：<code>~/.config/wezterm/wezterm.lua</code></p>
+            </div>
+          </div>
+
+          <div class="card card-highlight" style="margin-top: 2rem;">
+            <h4 style="margin-top: 0;">✓ 验证安装</h4>
+            <p style="margin-bottom: 0;">无论哪个平台，安装完成后打开 WezTerm，运行 <code>wezterm --version</code> 确认安装成功。</p>
+          </div>
+        </section>
+
+        <!-- Detailed Configuration -->
+        <section id="configuration" class="section-anchor">
+          <h2>详细配置 <a href="#configuration" class="anchor-link">#</a></h2>
+
+          <h3>配置文件基本结构</h3>
+          <p>WezTerm 配置文件是一个 Lua 脚本，必须返回一个配置表（table）：</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">~/.config/wezterm/wezterm.lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre><span class="comment">-- 导入 wezterm 模块</span>
+<span class="keyword">local</span> wezterm = <span class="function">require</span> <span class="string">'wezterm'</span>
+
+<span class="comment">-- 使用 config_builder 获取更好的类型检查和错误提示</span>
+<span class="keyword">local</span> config = wezterm.<span class="function">config_builder</span>()
+
+<span class="comment">-- 在这里添加你的配置...</span>
+config.<span class="property">font_size</span> = <span class="number">17.0</span>
+
+<span class="comment">-- 返回配置表</span>
+<span class="keyword">return</span> config</pre>
+            </div>
+          </div>
+
+          <h3>1. 主题配色（自动跟随系统）</h3>
+          <p><strong>为什么重要：</strong>自动跟随系统深浅色模式可以保持视觉一致性，减少眼睛疲劳。</p>
+          <p><strong>运作原理：</strong>通过监听 <code>window-config-reloaded</code> 事件，检测系统外观变化并动态切换配色方案。</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">主题配置</span>
+              <span class="code-lang">Lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre><span class="comment">-- Catppuccin 配色定义</span>
+<span class="keyword">local</span> colors = {
+  dark = {
+    scheme = <span class="string">'Catppuccin Mocha'</span>,
+    mantle = <span class="string">'#181825'</span>,
+    base = <span class="string">'#1e1e2e'</span>,
+    surface0 = <span class="string">'#313244'</span>,
+    surface1 = <span class="string">'#45475a'</span>,
+    text = <span class="string">'#cdd6f4'</span>,
+    subtext0 = <span class="string">'#a6adc8'</span>,
+    mauve = <span class="string">'#cba6f7'</span>,
+    blue = <span class="string">'#89b4fa'</span>,
+    pink = <span class="string">'#f5c2e7'</span>,
+  },
+  light = {
+    scheme = <span class="string">'Catppuccin Latte'</span>,
+    mantle = <span class="string">'#eff1f5'</span>,
+    base = <span class="string">'#eff1f5'</span>,
+    surface0 = <span class="string">'#ccd0da'</span>,
+    surface1 = <span class="string">'#bcc0cc'</span>,
+    text = <span class="string">'#4c4f69'</span>,
+    subtext0 = <span class="string">'#6c6f85'</span>,
+    mauve = <span class="string">'#8839ef'</span>,
+    blue = <span class="string">'#1e66f5'</span>,
+    pink = <span class="string">'#ea76cb'</span>,
+  },
+}
+
+<span class="keyword">local function</span> <span class="function">is_dark</span>(appearance)
+  <span class="keyword">return</span> appearance:<span class="function">find</span> <span class="string">'Dark'</span>
+<span class="keyword">end</span>
+
+<span class="keyword">local function</span> <span class="function">get_colors</span>(appearance)
+  <span class="keyword">return</span> <span class="function">is_dark</span>(appearance) <span class="keyword">and</span> colors.dark <span class="keyword">or</span> colors.light
+<span class="keyword">end</span>
+
+<span class="comment">-- 动态切换主题</span>
+wezterm.<span class="function">on</span>(<span class="string">'window-config-reloaded'</span>, <span class="keyword">function</span>(window, pane)
+  <span class="keyword">local</span> overrides = window:<span class="function">get_config_overrides</span>() <span class="keyword">or</span> {}
+  <span class="keyword">local</span> appearance = window:<span class="function">get_appearance</span>()
+  <span class="keyword">local</span> c = <span class="function">get_colors</span>(appearance)
+  <span class="keyword">if</span> overrides.color_scheme ~= c.scheme <span class="keyword">then</span>
+    overrides.color_scheme = c.scheme
+    window:<span class="function">set_config_overrides</span>(overrides)
+  <span class="keyword">end</span>
+<span class="keyword">end</span>)</pre>
+            </div>
+          </div>
+
+          <h3>2. 字体配置</h3>
+          <p><strong>为什么重要：</strong>好的字体配置可以提升代码可读性，连字特性让操作符更直观。</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">字体配置</span>
+              <span class="code-lang">Lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre>config.<span class="property">font</span> = wezterm.<span class="function">font_with_fallback</span> {
+  {
+    family = <span class="string">'JetBrainsMono Nerd Font'</span>,
+    weight = <span class="string">'Medium'</span>,
+    <span class="comment">-- 启用连字特性</span>
+    harfbuzz_features = { <span class="string">'calt=1'</span>, <span class="string">'clig=1'</span>, <span class="string">'liga=1'</span> },
+  },
+  { family = <span class="string">'Fira Code'</span>, weight = <span class="string">'Medium'</span> },
+  <span class="string">'Apple Color Emoji'</span>,  <span class="comment">-- Emoji 回退</span>
+}
+
+config.<span class="property">font_size</span> = <span class="number">17.0</span>
+config.<span class="property">line_height</span> = <span class="number">1.2</span>
+config.<span class="property">cell_width</span> = <span class="number">1.0</span></pre>
+            </div>
+          </div>
+
+          <h3>3. 窗口样式（毛玻璃效果）</h3>
+          <p><strong>适用场景：</strong>想要现代化、美观的终端外观，同时能看到桌面背景。</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">窗口样式</span>
+              <span class="code-lang">Lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre><span class="comment">-- 窗口透明度 + 毛玻璃效果</span>
+config.<span class="property">window_background_opacity</span> = <span class="number">0.7</span>
+config.<span class="property">macos_window_background_blur</span> = <span class="number">30</span>
+
+<span class="comment">-- 窗口装饰：将关闭/最小化/最大化按钮集成到 Tab Bar</span>
+config.<span class="property">window_decorations</span> = <span class="string">'INTEGRATED_BUTTONS|RESIZE'</span>
+
+<span class="comment">-- 窗口内边距</span>
+config.<span class="property">window_padding</span> = {
+  left = <span class="number">20</span>,
+  right = <span class="number">20</span>,
+  top = <span class="number">30</span>,
+  bottom = <span class="number">20</span>,
+}
+
+<span class="comment">-- 初始窗口大小</span>
+config.<span class="property">initial_cols</span> = <span class="number">90</span>
+config.<span class="property">initial_rows</span> = <span class="number">23</span></pre>
+            </div>
+          </div>
+
+          <h3>4. 快捷键配置</h3>
+          <p><strong>为什么重要：</strong>自定义快捷键可以大幅提升操作效率，让常用操作触手可及。</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">快捷键配置</span>
+              <span class="code-lang">Lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre>config.<span class="property">keys</span> = {
+  <span class="comment">-- Tab 操作</span>
+  { key = <span class="string">'t'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">SpawnTab</span> <span class="string">'CurrentPaneDomain'</span> },
+  { key = <span class="string">'w'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">CloseCurrentTab</span> { confirm = <span class="keyword">true</span> } },
+
+  <span class="comment">-- Tab 切换 (Cmd+1-5)</span>
+  { key = <span class="string">'1'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ActivateTab</span>(<span class="number">0</span>) },
+  { key = <span class="string">'2'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ActivateTab</span>(<span class="number">1</span>) },
+  { key = <span class="string">'3'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ActivateTab</span>(<span class="number">2</span>) },
+  { key = <span class="string">'4'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ActivateTab</span>(<span class="number">3</span>) },
+  { key = <span class="string">'5'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ActivateTab</span>(<span class="number">4</span>) },
+
+  <span class="comment">-- 分屏</span>
+  { key = <span class="string">'d'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">SplitHorizontal</span> { domain = <span class="string">'CurrentPaneDomain'</span> } },
+  { key = <span class="string">'d'</span>, mods = <span class="string">'CMD|SHIFT'</span>, action = wezterm.action.<span class="function">SplitVertical</span> { domain = <span class="string">'CurrentPaneDomain'</span> } },
+
+  <span class="comment">-- 窗格导航 (Cmd+Alt+hjkl)</span>
+  { key = <span class="string">'h'</span>, mods = <span class="string">'CMD|ALT'</span>, action = wezterm.action.<span class="function">ActivatePaneDirection</span> <span class="string">'Left'</span> },
+  { key = <span class="string">'l'</span>, mods = <span class="string">'CMD|ALT'</span>, action = wezterm.action.<span class="function">ActivatePaneDirection</span> <span class="string">'Right'</span> },
+  { key = <span class="string">'k'</span>, mods = <span class="string">'CMD|ALT'</span>, action = wezterm.action.<span class="function">ActivatePaneDirection</span> <span class="string">'Up'</span> },
+  { key = <span class="string">'j'</span>, mods = <span class="string">'CMD|ALT'</span>, action = wezterm.action.<span class="function">ActivatePaneDirection</span> <span class="string">'Down'</span> },
+
+  <span class="comment">-- 其他</span>
+  { key = <span class="string">'k'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">ClearScrollback</span> <span class="string">'ScrollbackAndViewport'</span> },
+  { key = <span class="string">'f'</span>, mods = <span class="string">'CMD'</span>, action = wezterm.action.<span class="function">Search</span> <span class="string">'CurrentSelectionOrEmptyString'</span> },
+  { key = <span class="string">'f'</span>, mods = <span class="string">'CMD|CTRL'</span>, action = wezterm.action.<span class="function">ToggleFullScreen</span> },
+}</pre>
+            </div>
+          </div>
+
+          <h3>5. Status Bar（系统监控）</h3>
+          <p><strong>运作原理：</strong>通过 <code>update-status</code> 事件定期执行 shell 命令获取系统信息，并显示在 Tab Bar 右侧。</p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-filename">Status Bar 配置</span>
+              <span class="code-lang">Lua</span>
+              <button class="copy-button" onclick="copyCode(this)">
+                <span>复制</span>
+              </button>
+            </div>
+            <div class="code-content">
+<pre>config.<span class="property">status_update_interval</span> = <span class="number">2000</span>  <span class="comment">-- 每 2 秒更新</span>
+
+wezterm.<span class="function">on</span>(<span class="string">'update-status'</span>, <span class="keyword">function</span>(window, pane)
+  <span class="keyword">local</span> appearance = window:<span class="function">get_appearance</span>()
+  <span class="keyword">local</span> is_dark = appearance:<span class="function">find</span> <span class="string">'Dark'</span>
+  <span class="keyword">local</span> fg_color = is_dark <span class="keyword">and</span> <span class="string">'#cdd6f4'</span> <span class="keyword">or</span> <span class="string">'#4c4f69'</span>
+  <span class="keyword">local</span> icon_color = is_dark <span class="keyword">and</span> <span class="string">'#89b4fa'</span> <span class="keyword">or</span> <span class="string">'#1e66f5'</span>
+
+  <span class="keyword">local</span> success, stdout = wezterm.<span class="function">run_child_process</span>({
+    <span class="string">'/bin/zsh'</span>, <span class="string">'-c'</span>,
+    <span class="string">[[
+      cpu=$(top -l 1 -n 0 | grep 'CPU usage' | awk '{printf "%.0f", $3}')
+      mem_used=$(top -l 1 -n 0 | head -n 10 | grep PhysMem | awk '{print $2}' | tr -d 'G')
+      mem_total=$(sysctl -n hw.memsize | awk '{printf "%.0f", $1/1024/1024/1024}')
+      echo "$cpu|$mem_used|$mem_total"
+    ]]</span>
+  })
+
+  <span class="keyword">local</span> status_text = <span class="string">''</span>
+  <span class="keyword">if</span> success <span class="keyword">then</span>
+    <span class="keyword">local</span> cpu, mem_used, mem_total = stdout:<span class="function">match</span>(<span class="string">'(%d+)|(%d+)|(%d+)'</span>)
+    <span class="keyword">if</span> cpu <span class="keyword">and</span> mem_used <span class="keyword">and</span> mem_total <span class="keyword">then</span>
+      status_text = wezterm.<span class="function">format</span>({
+        { Foreground = { Color = icon_color } }, { Text = <span class="string">'󰻠 '</span> },
+        { Foreground = { Color = fg_color } }, { Text = cpu .. <span class="string">'%'</span> },
+        { Foreground = { Color = icon_color } }, { Text = <span class="string">'   󰍛 '</span> },
+        { Foreground = { Color = fg_color } }, { Text = mem_used .. <span class="string">'G/'</span> .. mem_total .. <span class="string">'G'</span> },
+        { Text = <span class="string">'  '</span> },
+      })
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+
+  window:<span class="function">set_right_status</span>(status_text)
+<span class="keyword">end</span>)</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Patterns -->
+        <section id="patterns" class="section-anchor">
+          <h2>反模式 vs 最佳实践 <a href="#patterns" class="anchor-link">#</a></h2>
+
+          <div class="comparison-grid">
+            <div class="comparison-card bad">
+              <div class="comparison-header">❌ 不推荐</div>
+              <p>直接硬编码颜色值散落在配置各处</p>
+              <div class="code-block" style="margin: 1rem 0;">
+                <div class="code-content">
+<pre>config.colors = {
+  tab_bar = {
+    background = <span class="string">'#181825'</span>,
+    active_tab = { bg_color = <span class="string">'#cba6f7'</span> }
+  }
+}
+<span class="comment">-- 深色/浅色需要维护两份代码</span></pre>
+                </div>
+              </div>
+              <p><strong>问题：</strong>切换主题需要修改多处，容易遗漏导致颜色不一致。</p>
+            </div>
+
+            <div class="comparison-card good">
+              <div class="comparison-header">✓ 推荐</div>
+              <p>使用变量集中管理配色</p>
+              <div class="code-block" style="margin: 1rem 0;">
+                <div class="code-content">
+<pre><span class="keyword">local</span> colors = {
+  dark = { mauve = <span class="string">'#cba6f7'</span>, ... },
+  light = { mauve = <span class="string">'#8839ef'</span>, ... },
+}
+<span class="keyword">local</span> c = get_colors(appearance)
+<span class="comment">-- 使用 c.mauve 引用</span></pre>
+                </div>
+              </div>
+              <p><strong>优点：</strong>一处定义，处处引用，主题切换只需改变 colors 对象。</p>
+            </div>
+          </div>
+
+          <div class="comparison-grid" style="margin-top: 1.5rem;">
+            <div class="comparison-card bad">
+              <div class="comparison-header">❌ 不推荐</div>
+              <p>在 Status Bar 中执行耗时命令</p>
+              <div class="code-block" style="margin: 1rem 0;">
+                <div class="code-content">
+<pre>config.status_update_interval = <span class="number">100</span>
+<span class="comment">-- 每 100ms 执行 top 命令</span>
+<span class="comment">-- 会导致 CPU 占用过高</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-card good">
+              <div class="comparison-header">✓ 推荐</div>
+              <p>合理的更新间隔</p>
+              <div class="code-block" style="margin: 1rem 0;">
+                <div class="code-content">
+<pre>config.status_update_interval = <span class="number">2000</span>
+<span class="comment">-- 每 2 秒更新一次</span>
+<span class="comment">-- 平衡实时性与性能</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Complete Examples -->
+        <section id="examples" class="section-anchor">
+          <h2>完整示例 <a href="#examples" class="anchor-link">#</a></h2>
+
+          <div class="tabs">
+            <div class="tab-list" role="tablist">
+              <button class="tab-button active" role="tab" aria-selected="true" onclick="switchTab(event, 'basic')">Basic</button>
+              <button class="tab-button" role="tab" aria-selected="false" onclick="switchTab(event, 'advanced')">Advanced</button>
+              <button class="tab-button" role="tab" aria-selected="false" onclick="switchTab(event, 'full')">完整配置</button>
+            </div>
+
+            <div id="basic" class="tab-panel active" role="tabpanel">
+              <h4>基础配置 - 快速上手</h4>
+              <p>最简配置，适合快速体验 WezTerm：</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-filename">wezterm.lua (基础版)</span>
+                  <button class="copy-button" onclick="copyCode(this)">
+                    <span>复制</span>
+                  </button>
+                </div>
+                <div class="code-content">
+<pre><span class="keyword">local</span> wezterm = <span class="function">require</span> <span class="string">'wezterm'</span>
+<span class="keyword">local</span> config = wezterm.<span class="function">config_builder</span>()
+
+<span class="comment">-- 基础配置</span>
+config.<span class="property">color_scheme</span> = <span class="string">'Catppuccin Mocha'</span>
+config.<span class="property">font</span> = wezterm.<span class="function">font</span>(<span class="string">'JetBrainsMono Nerd Font'</span>)
+config.<span class="property">font_size</span> = <span class="number">16.0</span>
+
+<span class="comment">-- 窗口</span>
+config.<span class="property">window_background_opacity</span> = <span class="number">0.9</span>
+config.<span class="property">window_decorations</span> = <span class="string">'RESIZE'</span>
+
+<span class="keyword">return</span> config</pre>
+                </div>
+              </div>
+            </div>
+
+            <div id="advanced" class="tab-panel" role="tabpanel">
+              <h4>高级配置 - 性能优化</h4>
+              <p>启用 GPU 加速和高帧率：</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-filename">性能配置</span>
+                  <button class="copy-button" onclick="copyCode(this)">
+                    <span>复制</span>
+                  </button>
+                </div>
+                <div class="code-content">
+<pre><span class="comment">-- 性能与渲染</span>
+config.<span class="property">front_end</span> = <span class="string">'WebGpu'</span>            <span class="comment">-- 使用 WebGPU 渲染</span>
+config.<span class="property">webgpu_power_preference</span> = <span class="string">'HighPerformance'</span>
+config.<span class="property">max_fps</span> = <span class="number">120</span>                   <span class="comment">-- 最大帧率</span>
+config.<span class="property">animation_fps</span> = <span class="number">60</span>              <span class="comment">-- 动画帧率</span>
+
+<span class="comment">-- 滚动缓冲区</span>
+config.<span class="property">scrollback_lines</span> = <span class="number">10000</span>       <span class="comment">-- 历史行数</span>
+config.<span class="property">enable_scroll_bar</span> = <span class="keyword">false</span>      <span class="comment">-- 隐藏滚动条</span>
+
+<span class="comment">-- 光标</span>
+config.<span class="property">default_cursor_style</span> = <span class="string">'BlinkingBar'</span>
+config.<span class="property">cursor_blink_rate</span> = <span class="number">500</span>
+config.<span class="property">cursor_thickness</span> = <span class="number">2</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div id="full" class="tab-panel" role="tabpanel">
+              <h4>完整配置文件</h4>
+              <p>以下是当前使用的完整配置，可直接复制使用：</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-filename">~/.config/wezterm/wezterm.lua</span>
+                  <button class="copy-button" onclick="copyCode(this)">
+                    <span>复制</span>
+                  </button>
+                </div>
+                <div class="code-content">
+<pre>local wezterm = require 'wezterm'
+local config = wezterm.config_builder()
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 外观主题（自动跟随系统深色/浅色模式）
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- Catppuccin 配色定义
+local colors = {
+  dark = {
+    scheme = 'Catppuccin Mocha',
+    mantle = '#181825',
+    mantle_alpha = 'rgba(24, 24, 37, 0.7)',  -- 带透明度的标题栏背景
+    base = '#1e1e2e',
+    surface0 = '#313244',
+    surface1 = '#45475a',
+    text = '#cdd6f4',
+    subtext0 = '#a6adc8',
+    mauve = '#cba6f7',
+    blue = '#89b4fa',
+    pink = '#f5c2e7',
+  },
+  light = {
+    scheme = 'Catppuccin Latte',
+    mantle = '#eff1f5',
+    mantle_alpha = 'rgba(239, 241, 245, 0.7)',  -- 带透明度的标题栏背景
+    base = '#eff1f5',
+    surface0 = '#ccd0da',
+    surface1 = '#bcc0cc',
+    text = '#4c4f69',
+    subtext0 = '#6c6f85',
+    mauve = '#8839ef',
+    blue = '#1e66f5',
+    pink = '#ea76cb',
+  },
+}
+
+local function is_dark(appearance)
+  return appearance:find 'Dark'
+end
+
+local function get_colors(appearance)
+  return is_dark(appearance) and colors.dark or colors.light
+end
+
+local function get_appearance()
+  if wezterm.gui then
+    return wezterm.gui.get_appearance()
+  end
+  return 'Dark'
+end
+
+-- 生成 Tab Bar 颜色配置
+local function make_tab_bar_colors(c)
+  return {
+    background = c.mantle,
+    inactive_tab_edge = c.surface0,
+    active_tab = {
+      bg_color = c.mauve,
+      fg_color = c.base,
+      intensity = 'Bold',
+    },
+    inactive_tab = {
+      bg_color = c.surface0,
+      fg_color = c.subtext0,
+    },
+    inactive_tab_hover = {
+      bg_color = c.surface1,
+      fg_color = c.text,
+      italic = true,
+    },
+    new_tab = {
+      bg_color = c.mantle,
+      fg_color = c.blue,
+    },
+    new_tab_hover = {
+      bg_color = c.surface0,
+      fg_color = c.pink,
+      italic = true,
+    },
+  }
+end
+
+-- 初始化配色
+local current_colors = get_colors(get_appearance())
+config.color_scheme = current_colors.scheme
+
+-- 动态切换主题
+wezterm.on('window-config-reloaded', function(window, pane)
+  local overrides = window:get_config_overrides() or {}
+  local appearance = window:get_appearance()
+  local c = get_colors(appearance)
+  if overrides.color_scheme ~= c.scheme then
+    overrides.color_scheme = c.scheme
+    overrides.colors = { tab_bar = make_tab_bar_colors(c) }
+    overrides.window_frame = {
+      font = wezterm.font { family = 'JetBrainsMono Nerd Font', weight = 'Bold' },
+      font_size = 14.0,
+      active_titlebar_bg = c.mantle,
+      inactive_titlebar_bg = c.mantle,
+      border_left_width = '0.4cell',
+      border_right_width = '0.4cell',
+      border_top_height = '0.2cell',
+      border_bottom_height = '0.2cell',
+      border_left_color = c.mantle,
+      border_right_color = c.mantle,
+      border_top_color = c.mantle,
+      border_bottom_color = c.mantle,
+    }
+    window:set_config_overrides(overrides)
+  end
+end)
+
+-- 自定义 Tab 标题格式（设置最小宽度）
+local TAB_MIN_WIDTH = 12  -- 最小宽度（字符数）
+
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+  local title = tab.active_pane.title
+  -- 如果标题太长，截断并加省略号
+  if #title > max_width - 2 then
+    title = string.sub(title, 1, max_width - 5) .. '...'
+  end
+  -- 如果标题太短，两侧补空格使其居中
+  if #title < TAB_MIN_WIDTH then
+    local padding = TAB_MIN_WIDTH - #title
+    local left_pad = math.floor(padding / 2)
+    local right_pad = padding - left_pad
+    title = string.rep(' ', left_pad) .. title .. string.rep(' ', right_pad)
+  end
+  return ' ' .. title .. ' '
+end)
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 字体配置
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.font = wezterm.font_with_fallback {
+  {
+    family = 'JetBrainsMono Nerd Font',
+    weight = 'Medium',
+    harfbuzz_features = { 'calt=1', 'clig=1', 'liga=1' },  -- 启用连字
+  },
+  { family = 'Fira Code', weight = 'Medium' },
+  'Apple Color Emoji',
+}
+
+config.font_size = 17.0
+config.line_height = 1.2
+config.cell_width = 1.0
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 窗口样式
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- 窗口透明度 + 毛玻璃效果
+config.window_background_opacity = 0.7
+config.macos_window_background_blur = 30
+
+-- 窗口装饰：将关闭/最小化/最大化按钮集成到 Tab Bar
+config.window_decorations = 'INTEGRATED_BUTTONS|RESIZE'
+
+-- 窗口内边距
+config.window_padding = {
+  left = 20,
+  right = 20,
+  top = 30,
+  bottom = 20,
+}
+
+-- 初始窗口大小
+config.initial_cols = 90
+config.initial_rows = 23
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Tab Bar 样式
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.enable_tab_bar = true
+config.use_fancy_tab_bar = true
+config.tab_bar_at_bottom = false
+config.tab_max_width = 50
+config.show_tab_index_in_tab_bar = true
+config.switch_to_last_active_tab_when_closing_tab = true
+
+-- Tab Bar 字体和颜色（根据当前外观初始化）
+config.window_frame = {
+  font = wezterm.font { family = 'JetBrainsMono Nerd Font', weight = 'Bold' },
+  font_size = 14.0,
+  active_titlebar_bg = current_colors.mantle,
+  inactive_titlebar_bg = current_colors.mantle,
+  border_left_width = '0.4cell',
+  border_right_width = '0.4cell',
+  border_top_height = '0.2cell',
+  border_bottom_height = '0.2cell',
+  border_left_color = current_colors.mantle,
+  border_right_color = current_colors.mantle,
+  border_top_color = current_colors.mantle,
+  border_bottom_color = current_colors.mantle,
+}
+
+config.colors = {
+  tab_bar = make_tab_bar_colors(current_colors),
+}
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 光标样式
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.default_cursor_style = 'BlinkingBar'
+config.cursor_blink_rate = 500
+config.cursor_blink_ease_in = 'Constant'
+config.cursor_blink_ease_out = 'Constant'
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 性能与渲染
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.front_end = 'WebGpu'
+config.webgpu_power_preference = 'HighPerformance'
+config.max_fps = 120
+config.animation_fps = 60
+config.cursor_thickness = 2
+
+config.scrollback_lines = 10000
+config.enable_scroll_bar = false
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 快捷键
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.keys = {
+  -- Shift+Enter 插入换行而不执行（Ctrl+V + LF）
+  { key = 'Enter', mods = 'SHIFT', action = wezterm.action.SendString '\x16\x0a' },
+  { key = 't', mods = 'CMD', action = wezterm.action.SpawnTab 'CurrentPaneDomain' },
+  { key = 'w', mods = 'CMD', action = wezterm.action.CloseCurrentTab { confirm = true } },
+  { key = '1', mods = 'CMD', action = wezterm.action.ActivateTab(0) },
+  { key = '2', mods = 'CMD', action = wezterm.action.ActivateTab(1) },
+  { key = '3', mods = 'CMD', action = wezterm.action.ActivateTab(2) },
+  { key = '4', mods = 'CMD', action = wezterm.action.ActivateTab(3) },
+  { key = '5', mods = 'CMD', action = wezterm.action.ActivateTab(4) },
+  { key = '[', mods = 'CMD|SHIFT', action = wezterm.action.ActivateTabRelative(-1) },
+  { key = ']', mods = 'CMD|SHIFT', action = wezterm.action.ActivateTabRelative(1) },
+  { key = 'd', mods = 'CMD', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+  { key = 'd', mods = 'CMD|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
+  { key = 'k', mods = 'CMD', action = wezterm.action.ClearScrollback 'ScrollbackAndViewport' },
+  { key = 'f', mods = 'CMD', action = wezterm.action.Search 'CurrentSelectionOrEmptyString' },
+  { key = ',', mods = 'CMD', action = wezterm.action.SpawnCommandInNewTab {
+    cwd = wezterm.home_dir,
+    args = { 'open', wezterm.config_file },
+  }},
+  { key = 'f', mods = 'CMD|CTRL', action = wezterm.action.ToggleFullScreen },
+  { key = 'h', mods = 'CMD|ALT', action = wezterm.action.ActivatePaneDirection 'Left' },
+  { key = 'l', mods = 'CMD|ALT', action = wezterm.action.ActivatePaneDirection 'Right' },
+  { key = 'k', mods = 'CMD|ALT', action = wezterm.action.ActivatePaneDirection 'Up' },
+  { key = 'j', mods = 'CMD|ALT', action = wezterm.action.ActivatePaneDirection 'Down' },
+}
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 其他设置
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.window_close_confirmation = 'NeverPrompt'
+config.check_for_updates = false
+config.audible_bell = 'Disabled'
+config.term = 'xterm-256color'
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Status Bar（系统监控）
+-- ══════════════════════════════════════════════════════════════════════════════
+
+config.status_update_interval = 2000
+
+wezterm.on('update-status', function(window, pane)
+  local appearance = window:get_appearance()
+  local is_dark = appearance:find 'Dark'
+  local fg_color = is_dark and '#cdd6f4' or '#4c4f69'
+  local icon_color = is_dark and '#89b4fa' or '#1e66f5'
+
+  local success, stdout = wezterm.run_child_process({
+    '/bin/zsh', '-c',
+    [[
+      cpu=$(top -l 1 -n 0 | grep 'CPU usage' | awk '{printf "%.0f", $3}')
+      mem_used=$(top -l 1 -n 0 | head -n 10 | grep PhysMem | awk '{print $2}' | tr -d 'G')
+      mem_total=$(sysctl -n hw.memsize | awk '{printf "%.0f", $1/1024/1024/1024}')
+      echo "$cpu|$mem_used|$mem_total"
+    ]]
+  })
+
+  local status_text = ''
+  if success then
+    local cpu, mem_used, mem_total = stdout:match('(%d+)|(%d+)|(%d+)')
+    if cpu and mem_used and mem_total then
+      status_text = wezterm.format({
+        { Foreground = { Color = icon_color } }, { Text = '󰻠 ' },
+        { Foreground = { Color = fg_color } }, { Text = cpu .. '%' },
+        { Foreground = { Color = icon_color } }, { Text = '   󰍛 ' },
+        { Foreground = { Color = fg_color } }, { Text = mem_used .. 'G/' .. mem_total .. 'G' },
+        { Text = '  ' },
+      })
+    end
+  end
+
+  window:set_right_status(status_text)
+end)
+
+return config</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vocabulary -->
+        <section id="vocabulary" class="section-anchor">
+          <h2>术语词汇表 <a href="#vocabulary" class="anchor-link">#</a></h2>
+
+          <div class="vocab-grid">
+            <div class="vocab-card">
+              <div class="vocab-term">config_builder()</div>
+              <div class="vocab-def">WezTerm 提供的配置构建器，提供更好的类型检查和错误提示</div>
+            </div>
+            <div class="vocab-card">
+              <div class="vocab-term">font_with_fallback</div>
+              <div class="vocab-def">字体回退链，按顺序尝试字体直到找到可用的</div>
+            </div>
+            <div class="vocab-card">
+              <div class="vocab-term">harfbuzz_features</div>
+              <div class="vocab-def">OpenType 字体特性，如连字 (ligatures)</div>
+            </div>
+            <div class="vocab-card">
+              <div class="vocab-term">window_decorations</div>
+              <div class="vocab-def">窗口装饰样式，控制标题栏和边框外观</div>
+            </div>
+            <div class="vocab-card">
+              <div class="vocab-term">front_end</div>
+              <div class="vocab-def">渲染后端，如 WebGpu、OpenGL、Software</div>
+            </div>
+            <div class="vocab-card">
+              <div class="vocab-term">Pane / Tab</div>
+              <div class="vocab-def">Pane 是窗格（分屏），Tab 是标签页</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section id="troubleshooting" class="section-anchor">
+          <h2>故障排除 <a href="#troubleshooting" class="anchor-link">#</a></h2>
+
+          <table class="trouble-table">
+            <thead>
+              <tr>
+                <th>问题症状</th>
+                <th>可能原因</th>
+                <th>解决方案</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>图标显示为方框</td>
+                <td>未安装 Nerd Font</td>
+                <td><code>brew install --cask font-jetbrains-mono-nerd-font</code></td>
+              </tr>
+              <tr>
+                <td>配置不生效</td>
+                <td>Lua 语法错误</td>
+                <td>查看 WezTerm 日志：<code>View → Debug Overlay</code></td>
+              </tr>
+              <tr>
+                <td>毛玻璃无效</td>
+                <td>透明度设为 1.0</td>
+                <td>设置 <code>window_background_opacity < 1.0</code></td>
+              </tr>
+              <tr>
+                <td>Status Bar 不显示</td>
+                <td>Shell 命令失败</td>
+                <td>确保 <code>/bin/zsh</code> 可执行，检查 top 命令输出</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <details>
+            <summary>配置文件路径优先级</summary>
+            <div>
+              <p>WezTerm 按以下顺序查找配置文件：</p>
+              <ol>
+                <li><code>$WEZTERM_CONFIG_FILE</code> 环境变量</li>
+                <li><code>$XDG_CONFIG_HOME/wezterm/wezterm.lua</code></li>
+                <li><code>~/.config/wezterm/wezterm.lua</code></li>
+                <li><code>~/.wezterm.lua</code></li>
+              </ol>
+            </div>
+          </details>
+
+          <details>
+            <summary>如何查看 WezTerm 日志？</summary>
+            <div>
+              <p>按 <code>Cmd+Shift+L</code> 或通过菜单 <code>View → Debug Overlay</code> 打开调试面板，可以看到配置加载错误和运行时日志。</p>
+            </div>
+          </details>
+        </section>
+
+        <!-- Cheat Sheet -->
+        <section id="cheatsheet" class="section-anchor">
+          <h2>速查表 <a href="#cheatsheet" class="anchor-link">#</a></h2>
+
+          <h3>快捷键速查</h3>
+          <table class="cheat-table">
+            <thead>
+              <tr>
+                <th>操作</th>
+                <th>快捷键</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>新建 Tab</td><td><code>Cmd + T</code></td></tr>
+              <tr><td>关闭 Tab</td><td><code>Cmd + W</code></td></tr>
+              <tr><td>切换 Tab</td><td><code>Cmd + 1-5</code></td></tr>
+              <tr><td>水平分屏</td><td><code>Cmd + D</code></td></tr>
+              <tr><td>垂直分屏</td><td><code>Cmd + Shift + D</code></td></tr>
+              <tr><td>窗格导航</td><td><code>Cmd + Alt + H/J/K/L</code></td></tr>
+              <tr><td>清屏</td><td><code>Cmd + K</code></td></tr>
+              <tr><td>搜索</td><td><code>Cmd + F</code></td></tr>
+              <tr><td>全屏</td><td><code>Cmd + Ctrl + F</code></td></tr>
+              <tr><td>打开配置</td><td><code>Cmd + ,</code></td></tr>
+            </tbody>
+          </table>
+
+          <h3>常用配置项速查</h3>
+          <table class="cheat-table">
+            <thead>
+              <tr>
+                <th>配置项</th>
+                <th>说明</th>
+                <th>示例值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>font_size</code></td><td>字体大小</td><td><code>17.0</code></td></tr>
+              <tr><td><code>line_height</code></td><td>行高</td><td><code>1.2</code></td></tr>
+              <tr><td><code>window_background_opacity</code></td><td>窗口透明度</td><td><code>0.7</code></td></tr>
+              <tr><td><code>macos_window_background_blur</code></td><td>毛玻璃模糊度</td><td><code>30</code></td></tr>
+              <tr><td><code>scrollback_lines</code></td><td>滚动历史行数</td><td><code>10000</code></td></tr>
+              <tr><td><code>max_fps</code></td><td>最大帧率</td><td><code>120</code></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Quiz -->
+        <section id="quiz" class="section-anchor">
+          <h2>自测评估 <a href="#quiz" class="anchor-link">#</a></h2>
+
+          <div class="quiz" data-correct="2">
+            <p class="quiz-question">1. WezTerm 配置文件使用什么语言编写？</p>
+            <div class="quiz-options">
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">JSON</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, true)">Lua</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">YAML</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">TOML</button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz" data-correct="3">
+            <p class="quiz-question">2. 如何启用 WezTerm 的 GPU 加速？</p>
+            <div class="quiz-options">
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">config.gpu = true</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">config.accelerated = 'gpu'</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, true)">config.front_end = 'WebGpu'</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">config.renderer = 'metal'</button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz" data-correct="1">
+            <p class="quiz-question">3. 配置文件修改后需要重启 WezTerm 吗？</p>
+            <div class="quiz-options">
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, true)">不需要，自动热重载</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">需要完全退出重启</button>
+              <button class="quiz-option" tabindex="0" onclick="checkAnswer(this, false)">需要手动执行刷新命令</button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+        </section>
+
+        <!-- Next Steps -->
+        <section id="next-steps" class="section-anchor">
+          <h2>下一步行动 <a href="#next-steps" class="anchor-link">#</a></h2>
+
+          <div class="card">
+            <h3>快速开始</h3>
+            <ol>
+              <li>复制上方「完整配置」到 <code>~/.config/wezterm/wezterm.lua</code></li>
+              <li>打开 WezTerm，配置自动生效</li>
+              <li>根据个人喜好调整字体大小、透明度等参数</li>
+            </ol>
+          </div>
+
+          <div class="card">
+            <h3>进一步阅读</h3>
+            <ul>
+              <li><a href="https://wezfurlong.org/wezterm/config/files.html" target="_blank">WezTerm 官方文档 - 配置文件</a></li>
+              <li><a href="https://wezfurlong.org/wezterm/config/lua/config/index.html" target="_blank">WezTerm 配置项完整列表</a></li>
+              <li><a href="https://github.com/catppuccin/wezterm" target="_blank">Catppuccin WezTerm 主题</a></li>
+              <li><a href="https://www.nerdfonts.com/" target="_blank">Nerd Fonts 官网</a></li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>相关工具推荐</h3>
+            <ul>
+              <li><strong>Powerlevel10k</strong> - Zsh 主题，与 WezTerm 完美搭配</li>
+              <li><strong>zsh-autosuggestions</strong> - 命令自动补全</li>
+              <li><strong>zsh-syntax-highlighting</strong> - 语法高亮</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- Footer -->
+      <footer>
+        <div class="footer-meta">
+          <div class="footer-item">
+            <span>📄</span>
+            <span>来源：本地配置文件</span>
+          </div>
+          <div class="footer-item">
+            <span>📅</span>
+            <span>生成日期：2025-01-06</span>
+          </div>
+          <div class="footer-item">
+            <span>⚙️</span>
+            <span>WezTerm 版本：20240203+</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Floating Back to Top -->
+  <button class="floating-top" id="backToTop" aria-label="Back to top" onclick="scrollToTop()">↑</button>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">已复制到剪贴板！</div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Sidebar Toggle (Mobile)
+    // ══════════════════════════════════════════════════════════════════════════════
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const hamburger = document.querySelector('.hamburger');
+      sidebar.classList.toggle('open');
+      hamburger.classList.toggle('active');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Scroll Progress & Scrollspy
+    // ══════════════════════════════════════════════════════════════════════════════
+    const progressFill = document.getElementById('progressFill');
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = document.querySelectorAll('section[id]');
+    const backToTop = document.getElementById('backToTop');
+
+    function updateProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (scrollTop / docHeight) * 100;
+      progressFill.style.width = progress + '%';
+
+      // Back to top visibility
+      if (scrollTop > 300) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    }
+
+    // Scrollspy with IntersectionObserver
+    const observerOptions = {
+      rootMargin: '-20% 0px -70% 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(link => link.classList.remove('active'));
+          const activeLink = document.querySelector(`.toc-link[href="#${entry.target.id}"]`);
+          if (activeLink) activeLink.classList.add('active');
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => observer.observe(section));
+    window.addEventListener('scroll', updateProgress);
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Copy Code
+    // ══════════════════════════════════════════════════════════════════════════════
+    function copyCode(button) {
+      const codeBlock = button.closest('.code-block');
+      const code = codeBlock.querySelector('pre').textContent;
+
+      navigator.clipboard.writeText(code).then(() => {
+        showToast();
+        button.querySelector('span').textContent = '已复制';
+        setTimeout(() => {
+          button.querySelector('span').textContent = '复制';
+        }, 2000);
+      });
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Tabs
+    // ══════════════════════════════════════════════════════════════════════════════
+    function switchTab(event, tabId) {
+      const tabButtons = event.target.parentElement.querySelectorAll('.tab-button');
+      const tabPanels = event.target.closest('.tabs').querySelectorAll('.tab-panel');
+
+      tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
+      tabPanels.forEach(panel => panel.classList.remove('active'));
+
+      event.target.classList.add('active');
+      event.target.setAttribute('aria-selected', 'true');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Keyboard navigation for tabs
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          button.click();
+        }
+      });
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Quiz
+    // ══════════════════════════════════════════════════════════════════════════════
+    function checkAnswer(button, isCorrect) {
+      const quiz = button.closest('.quiz');
+      const options = quiz.querySelectorAll('.quiz-option');
+      const feedback = quiz.querySelector('.quiz-feedback');
+
+      options.forEach(opt => {
+        opt.disabled = true;
+        opt.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        button.classList.add('correct');
+        feedback.textContent = '✓ 正确！';
+        feedback.className = 'quiz-feedback show correct';
+      } else {
+        button.classList.add('incorrect');
+        feedback.textContent = '✗ 不正确，请再想想。';
+        feedback.className = 'quiz-feedback show incorrect';
+        // Re-enable after a delay
+        setTimeout(() => {
+          options.forEach(opt => {
+            opt.disabled = false;
+            opt.classList.remove('incorrect');
+          });
+          feedback.classList.remove('show');
+        }, 1500);
+      }
+    }
+
+    // Keyboard support for quiz options
+    document.querySelectorAll('.quiz-option').forEach(option => {
+      option.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          option.click();
+        }
+      });
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Advanced Mode Toggle
+    // ══════════════════════════════════════════════════════════════════════════════
+    function toggleAdvanced() {
+      const checkbox = document.getElementById('modeSwitch');
+      document.body.classList.toggle('show-advanced', checkbox.checked);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // Close sidebar on mobile when clicking a link
+    // ══════════════════════════════════════════════════════════════════════════════
+    tocLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth < 768) {
+          toggleSidebar();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

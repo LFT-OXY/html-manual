@@ -2,7 +2,7 @@ github 项目地址：https://github.com/oraios/serena
 
 
 
-[Serena](https://lft-oxy.github.io/html-manual/serena-documentation.html)
+[Serena](https://note.3oxy.com/html/serena-documentation.html)
 
 
 
