@@ -637,8 +637,10 @@
                     // Post-process: Intercept internal .md links to open in new tab
                     const currentDir = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/') + 1) : '';
                     mdContent.querySelectorAll('a[href]').forEach(a => {
-                        const href = a.getAttribute('href');
+                        let href = a.getAttribute('href');
                         if (href && (href.endsWith('.md') || href.endsWith('.html')) && !href.startsWith('http')) {
+                            // 先解码 href，避免双重编码
+                            try { href = decodeURIComponent(href); } catch(e) {}
                             // Resolve relative path
                             let targetPath = href;
                             if (href.startsWith('./')) {
@@ -651,7 +653,8 @@
                                     else if (part !== '.') parts.push(part);
                                 }
                                 targetPath = parts.join('/');
-                            } else if (!href.includes('/')) {
+                            } else {
+                                // 其他相对路径（如 "subdir/file.md"）
                                 targetPath = currentDir + href;
                             }
                             // Set link to open in new tab with URL param
