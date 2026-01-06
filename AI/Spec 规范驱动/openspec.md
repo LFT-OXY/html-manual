@@ -2,7 +2,7 @@ https://github.com/Fission-AI/OpenSpec
 
 
 
-[openspec-工作流程](https://note.3oxy.com/html/openspec-工作流程.html)
+[openspec-工作流程](../../html/openspec-工作流程.html)
 
 
 

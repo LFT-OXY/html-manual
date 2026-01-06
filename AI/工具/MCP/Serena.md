@@ -2,7 +2,7 @@ github 项目地址：https://github.com/oraios/serena
 
 
 
-[Serena](https://note.3oxy.com/html/serena-documentation.html)
+[Serena](../../../html/serena-documentation.html)
 
 
 

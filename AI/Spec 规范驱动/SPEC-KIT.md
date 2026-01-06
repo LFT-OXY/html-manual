@@ -4,7 +4,7 @@ https://github.com/github/spec-kit
 
 
 
-[spec-kit-工作流程](https://note.3oxy.com/html/spec-kit-工作流程.html)
+[spec-kit-工作流程](../../html/spec-kit-工作流程.html)
 
 # 🌱 Spec Kit  🌱 规格手册
 
