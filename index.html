@@ -155,6 +155,43 @@
         }
         .lightbox-close:hover { opacity: 1; }
 
+        /* Document Tab Bar */
+        .doc-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 180px;
+            padding: 6px 8px 6px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #e2e8f0;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .doc-tab:hover { background: #f1f5f9; color: #334155; }
+        .doc-tab.active {
+            background: #fff;
+            color: #0f172a;
+            border-color: #cbd5e1;
+            box-shadow: 0 1px 0 #fff;
+            position: relative;
+            z-index: 1;
+        }
+        .doc-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .doc-tab-close {
+            width: 18px; height: 18px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px;
+            color: #94a3b8;
+            transition: all 0.15s;
+        }
+        .doc-tab:hover .doc-tab-close, .doc-tab-close:focus { opacity: 1; }
+        .doc-tab-close:hover { background: #fee2e2; color: #ef4444; }
+
         /* Image zoom controls */
         .img-wrapper {
             position: relative;
@@ -273,6 +310,9 @@
 
         <!-- Content Wrapper -->
         <div id="contentWrapper" class="hidden h-full flex flex-col">
+            <!-- Tab Bar -->
+            <div id="tabBar" class="hidden bg-slate-100 border-b border-slate-200 px-2 pt-2 flex items-end gap-1 overflow-x-auto custom-scroll flex-shrink-0"></div>
+
             <!-- Top Bar -->
             <div class="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200/60 z-30 px-6 py-3 flex justify-between items-center flex-shrink-0 transition-all duration-300" id="topBar">
                 <div class="flex items-center gap-4 text-sm text-slate-500 overflow-hidden">
@@ -325,6 +365,16 @@
         // State
         let allFiles = [];
         let currentCategory = null; // null = show all
+        let filesByPath = new Map();
+
+        // Tab State
+        const tabStore = {
+            byId: new Map(),
+            idByPath: new Map(),
+            order: [],
+            activeId: null,
+            loadVersion: 0
+        };
 
         // DOM Elements
         const fileListEl = document.getElementById('fileList');
@@ -338,6 +388,7 @@
         const loader = document.getElementById('loader');
         const docTitle = document.getElementById('docTitle');
         const githubLink = document.getElementById('githubLink');
+        const tabBar = document.getElementById('tabBar');
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -431,6 +482,9 @@
                 
                 renderCategoryNav(categories);
 
+                // Build path lookup
+                filesByPath = new Map(allFiles.map(f => [f.path, f]));
+
                 // Default: Do NOT render list. Show prompt instead.
                 fileListEl.innerHTML = `<div class="text-slate-400 p-8 text-center text-sm flex flex-col items-center gap-2 opacity-60">
                     <i class="fas fa-hand-pointer text-xl"></i>
@@ -441,8 +495,8 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const fileParam = urlParams.get('file');
                 if (fileParam) {
-                    const target = allFiles.find(f => f.path === fileParam);
-                    if (target) loadFile(target, null);
+                    const target = filesByPath.get(fileParam);
+                    if (target) openFileInTab(target);
                 }
 
             } catch (err) {
@@ -540,7 +594,8 @@
                     const el = document.createElement('div');
                     el.className = 'nav-item group flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-slate-50 transition-all';
                     el.style.paddingLeft = `${12 + depth * 16}px`;
-                    el.onclick = () => loadFile(file, el);
+                    el.dataset.path = file.path;
+                    el.onclick = () => openFileInTab(file);
                     el.innerHTML = `
                         <div class="mt-0.5 w-4 flex-shrink-0 text-center">
                             <i class="fab ${iconClass} text-sm opacity-80 group-hover:opacity-100 transition"></i>
@@ -584,10 +639,168 @@
             });
         }
 
-        async function loadFile(file, el) {
-            // UI Update
+        // Tab Management Functions
+        function createTabId() {
+            return `tab_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        }
+
+        function getActiveTab() {
+            return tabStore.byId.get(tabStore.activeId) || null;
+        }
+
+        function resolveDocPath(fromPath, href) {
+            if (!href || href.startsWith('#') || href.startsWith('http') || /^(mailto:|tel:|javascript:)/i.test(href)) return null;
+
+            const hashIdx = href.indexOf('#');
+            const fragment = hashIdx >= 0 ? href.slice(hashIdx) : '';
+            let pathPart = hashIdx >= 0 ? href.slice(0, hashIdx) : href;
+
+            const lower = pathPart.toLowerCase();
+            if (!(lower.endsWith('.md') || lower.endsWith('.html'))) return null;
+
+            try { pathPart = decodeURIComponent(pathPart); } catch(e) {}
+            if (pathPart.startsWith('/')) pathPart = pathPart.slice(1);
+
+            const baseDir = fromPath.includes('/') ? fromPath.slice(0, fromPath.lastIndexOf('/') + 1) : '';
+            const parts = (baseDir + pathPart).split('/');
+            const stack = [];
+            for (const p of parts) {
+                if (!p || p === '.') continue;
+                if (p === '..') stack.pop();
+                else stack.push(p);
+            }
+            return { path: stack.join('/'), fragment };
+        }
+
+        function renderTabBar() {
+            if (tabStore.order.length === 0) {
+                tabBar.classList.add('hidden');
+                return;
+            }
+            tabBar.classList.remove('hidden');
+            tabBar.innerHTML = tabStore.order.map(id => {
+                const tab = tabStore.byId.get(id);
+                if (!tab) return '';
+                const isActive = id === tabStore.activeId;
+                const isMd = tab.file.name.toLowerCase().endsWith('.md');
+                const icon = isMd ? 'fa-markdown text-blue-500' : 'fa-html5 text-orange-500';
+                const title = tab.file.name.replace(/\.(md|html)$/i, '');
+                return `
+                    <div class="doc-tab ${isActive ? 'active' : ''}" data-tab-id="${id}" title="${tab.file.path}">
+                        <i class="fab ${icon} text-xs"></i>
+                        <span class="doc-tab-title">${title}</span>
+                        <span class="doc-tab-close" data-close-id="${id}"><i class="fas fa-times text-[10px]"></i></span>
+                    </div>`;
+            }).join('');
+        }
+
+        function openFileInTab(file, fragment = '') {
+            const existingId = tabStore.idByPath.get(file.path);
+            if (existingId) {
+                activateTab(existingId, fragment);
+                return;
+            }
+
+            const id = createTabId();
+            const tab = {
+                id,
+                file,
+                scrollTop: 0,
+                mdCache: null
+            };
+            tabStore.byId.set(id, tab);
+            tabStore.idByPath.set(file.path, id);
+            tabStore.order.push(id);
+            activateTab(id, fragment);
+        }
+
+        function activateTab(tabId, fragment = '') {
+            const prev = getActiveTab();
+            const tab = tabStore.byId.get(tabId);
+            if (!tab) return;
+
+            // If same tab and already rendered, just scroll to fragment
+            if (tabStore.activeId === tabId && tab.mdCache && fragment) {
+                const id = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+                const el = document.getElementById(decodeURIComponent(id));
+                if (el) el.scrollIntoView({ block: 'start' });
+                return;
+            }
+
+            if (prev && prev.id !== tabId) {
+                prev.scrollTop = document.getElementById('articleContainer').scrollTop;
+            }
+
+            tabStore.activeId = tabId;
+            renderTabBar();
+
+            // Update URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('file', tab.file.path);
+            history.replaceState(null, '', url.toString());
+
+            // Update sidebar highlight
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            if (el) el.classList.add('active');
+            const escapedPath = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(tab.file.path) : tab.file.path.replace(/"/g, '\\"');
+            const navEl = document.querySelector(`.nav-item[data-path="${escapedPath}"]`);
+            if (navEl) navEl.classList.add('active');
+
+            loadFile(tab.file, { tabId, fragment, restoreScroll: !!tab.mdCache });
+        }
+
+        function closeTab(tabId) {
+            const idx = tabStore.order.indexOf(tabId);
+            if (idx < 0) return;
+
+            const tab = tabStore.byId.get(tabId);
+            tabStore.order.splice(idx, 1);
+            tabStore.byId.delete(tabId);
+            if (tab) tabStore.idByPath.delete(tab.file.path);
+
+            if (tabStore.activeId === tabId) {
+                const nextId = tabStore.order[idx] || tabStore.order[idx - 1] || null;
+                tabStore.activeId = null;
+                if (nextId) {
+                    activateTab(nextId);
+                } else {
+                    contentWrapper.classList.add('hidden');
+                    tabBar.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    // Show sidebar toggle if sidebar is collapsed
+                    if (window.innerWidth >= 768 && sidebar.classList.contains('md:w-0')) {
+                        emptyStateTopBar.classList.remove('hidden');
+                    }
+                    history.replaceState(null, '', window.location.pathname);
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                }
+            } else {
+                renderTabBar();
+            }
+        }
+
+        tabBar.addEventListener('click', e => {
+            const closeBtn = e.target.closest('[data-close-id]');
+            if (closeBtn) {
+                e.stopPropagation();
+                closeTab(closeBtn.dataset.closeId);
+                return;
+            }
+            const tabEl = e.target.closest('[data-tab-id]');
+            if (tabEl) activateTab(tabEl.dataset.tabId);
+        });
+
+        tabBar.addEventListener('auxclick', e => {
+            if (e.button !== 1) return;
+            const tabEl = e.target.closest('[data-tab-id]');
+            if (tabEl) closeTab(tabEl.dataset.tabId);
+        });
+
+        async function loadFile(file, opts = {}) {
+            const { tabId, fragment, restoreScroll } = opts;
+            const tab = tabId ? tabStore.byId.get(tabId) : null;
+            const currentVersion = ++tabStore.loadVersion;
+
+            // UI Update (sidebar highlight handled by activateTab)
             
             // Mobile Sidebar Toggle
             if (window.innerWidth < 768) {
@@ -614,15 +827,22 @@
             const mdClasses = ['px-6', 'py-12', 'md:px-12', 'md:py-16', 'w-full']; 
 
             try {
-                if (file.name.endsWith('.md')) {
+                const isMd = file.name.toLowerCase().endsWith('.md');
+                if (isMd) {
                     // Apply MD Layout
                     // Reset to scrollable container for MD
                     articleContainer.className = 'flex-1 flex flex-col bg-white shadow-sm border-x border-slate-100 overflow-y-auto custom-scroll';
                     articleContainer.classList.add(...mdClasses);
-                    
-                    const res = await fetch(file.url); // Use API URL to get base64
-                    const data = await res.json();
-                    let text = decodeURIComponent(escape(window.atob(data.content.replace(/\n/g, ""))));
+
+                    // Use cache or fetch
+                    let text = tab?.mdCache;
+                    if (!text) {
+                        const res = await fetch(file.url);
+                        if (currentVersion !== tabStore.loadVersion) return; // Stale load
+                        const data = await res.json();
+                        text = decodeURIComponent(escape(window.atob(data.content.replace(/\n/g, ""))));
+                        if (tab) tab.mdCache = text;
+                    }
 
                     // Pre-process: Convert wiki links [[file]] to standard markdown links
                     text = text.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, link, label) => {
@@ -634,36 +854,35 @@
                     // Render Markdown
                     mdContent.innerHTML = marked.parse(text);
 
-                    // Post-process: Intercept internal .md links to open in new tab
-                    const currentDir = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/') + 1) : '';
+                    // Post-process: Intercept internal doc links to open in app tab
                     mdContent.querySelectorAll('a[href]').forEach(a => {
-                        let href = a.getAttribute('href');
-                        if (href && (href.endsWith('.md') || href.endsWith('.html')) && !href.startsWith('http')) {
-                            // 先解码 href，避免双重编码
-                            try { href = decodeURIComponent(href); } catch(e) {}
-                            // Resolve relative path
-                            let targetPath = href;
-                            if (href.startsWith('./')) {
-                                targetPath = currentDir + href.substring(2);
-                            } else if (href.startsWith('../')) {
-                                let parts = currentDir.split('/').filter(p => p);
-                                let hrefParts = href.split('/');
-                                for (const part of hrefParts) {
-                                    if (part === '..') parts.pop();
-                                    else if (part !== '.') parts.push(part);
-                                }
-                                targetPath = parts.join('/');
-                            } else {
-                                // 其他相对路径（如 "subdir/file.md"）
-                                targetPath = currentDir + href;
-                            }
-                            // Set link to open in new tab with URL param
-                            const baseUrl = window.location.origin + window.location.pathname;
-                            a.href = `${baseUrl}?file=${encodeURIComponent(targetPath)}`;
-                            a.target = '_blank';
+                        const href = a.getAttribute('href');
+                        const resolved = resolveDocPath(file.path, href);
+                        if (resolved) {
+                            // Internal doc link - open in app tab
+                            a.dataset.docPath = resolved.path;
+                            if (resolved.fragment) a.dataset.docFragment = resolved.fragment;
+                            a.removeAttribute('target');
                             a.classList.add('internal-link');
+                        } else if (href && (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//'))) {
+                            // External link - open in browser new tab
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
                         }
                     });
+
+                    // Click handler for internal links
+                    mdContent.onclick = e => {
+                        const a = e.target.closest('a[data-doc-path]');
+                        if (!a) return;
+                        e.preventDefault();
+                        const targetFile = filesByPath.get(a.dataset.docPath);
+                        if (targetFile) {
+                            openFileInTab(targetFile, a.dataset.docFragment || '');
+                        } else {
+                            window.open(`${window.location.pathname}?file=${encodeURIComponent(a.dataset.docPath)}`, '_blank');
+                        }
+                    };
                     
                     // Highlight Code & Add Mac Window Header
                     mdContent.querySelectorAll('pre code').forEach((block) => {
@@ -777,6 +996,15 @@
                     mdContent.classList.remove('fade-enter-active');
                     void mdContent.offsetWidth; // trigger reflow
                     mdContent.classList.add('fade-enter', 'fade-enter-active');
+
+                    // Restore scroll position or jump to fragment
+                    if (fragment) {
+                        const id = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+                        const el = document.getElementById(decodeURIComponent(id));
+                        if (el) el.scrollIntoView({ block: 'start' });
+                    } else if (restoreScroll && tab) {
+                        articleContainer.scrollTop = tab.scrollTop || 0;
+                    }
 
                 } else {
                     // HTML
