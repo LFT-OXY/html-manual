@@ -280,4 +280,4 @@
 
 # 用户输入
 
-  **URL:** 
+  **URL:**  https://github.com/obra/superpowers
